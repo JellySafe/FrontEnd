@@ -1,13 +1,13 @@
 import { Badge } from "@jellysafe/design-system";
 import Link from "next/link";
 import { RISK_LABEL } from "@/shared/risk/types";
-import type { BeachListItem } from "../types";
+import type { BeachSummary } from "@/shared/mocks/beaches.mock";
 
 // chevron-right(trailing) 아이콘 path
 const CHEVRON_RIGHT =
   "M13.1715 12.0007L8.22168 7.05093L9.6359 5.63672L15.9999 12.0007L9.6359 18.3646L8.22168 16.9504L13.1715 12.0007Z";
 
-export type AlternativeBeachesProps = { beaches: BeachListItem[] };
+export type AlternativeBeachesProps = { beaches: BeachSummary[] };
 
 export function AlternativeBeaches({ beaches }: AlternativeBeachesProps) {
   // 대체 해변이 없으면 섹션 자체를 렌더하지 않음

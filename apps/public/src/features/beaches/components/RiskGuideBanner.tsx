@@ -12,14 +12,12 @@ const BANNER_CLASSES: Record<RiskLevel, string> = {
     "bg-[color-mix(in_srgb,var(--color-critical-50)_25%,transparent)] border border-[color-mix(in_srgb,var(--color-critical-50)_50%,transparent)] text-[var(--color-critical-50)]",
 };
 
-// risk는 배너 색상용, guideText가 있으면 API 안내문을 우선 사용하고 없으면 등급별 기본 문구.
-export type RiskGuideBannerProps = { risk: RiskLevel; guideText?: string };
+export type RiskGuideBannerProps = { risk: RiskLevel };
 
-export function RiskGuideBanner({ risk, guideText }: RiskGuideBannerProps) {
-  const message = guideText?.trim() ? guideText : RISK_GUIDE_MESSAGE[risk];
+export function RiskGuideBanner({ risk }: RiskGuideBannerProps) {
   return (
     <p className={["rounded-2xl px-(--padding-5) py-(--padding-4) text-body-xsmall-mobile", BANNER_CLASSES[risk]].join(" ")}>
-      {message}
+      {RISK_GUIDE_MESSAGE[risk]}
     </p>
   );
 }

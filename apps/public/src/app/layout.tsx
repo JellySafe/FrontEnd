@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { LikesProvider } from "@/shared/likes/LikesProvider";
 import { SelectedLocationProvider } from "@/shared/location/SelectedLocationProvider";
-import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "JellySafe",
@@ -17,11 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
-        <Providers>
-          <LikesProvider>
-            <SelectedLocationProvider>{children}</SelectedLocationProvider>
-          </LikesProvider>
-        </Providers>
+        <LikesProvider>
+          <SelectedLocationProvider>{children}</SelectedLocationProvider>
+        </LikesProvider>
       </body>
     </html>
   );

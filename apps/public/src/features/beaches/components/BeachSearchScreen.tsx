@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useLikes } from "@/shared/likes/LikesProvider";
 import { useSelectedLocation } from "@/shared/location/SelectedLocationProvider";
+import { BEACHES } from "@/shared/mocks/beaches.mock";
 import { RISK_LABEL, RISK_ORDER } from "@/shared/risk/types";
 import type { MapPoint, RiskLevel } from "@/shared/risk/types";
 import { isAlarmTooltipDismissed } from "@/shared/ui/alarm-tooltip-storage";
@@ -14,7 +15,6 @@ import { PUBLIC_NAV_ITEMS } from "@/shared/ui/navigation-items";
 import { PlaceCard } from "@/shared/ui/PlaceCard";
 import { PublicPageShell } from "@/shared/ui/PublicPageShell";
 import { SearchField } from "@/shared/ui/SearchField";
-import { useBeachesQuery } from "../api/useBeachesQuery";
 import { filterBeaches, sortBeaches } from "../utils/sort-beaches";
 import type { BeachSortValue } from "../utils/sort-beaches";
 import { AlarmTooltip } from "./AlarmTooltip";
@@ -27,7 +27,6 @@ const ALARM_TOOLTIP_TEXT = "관심 해변을 저장하고\n해파리 출몰 알�
 export function BeachSearchScreen() {
   const { location } = useSelectedLocation();
   const { isLiked, toggleLike } = useLikes();
-  const { data: beaches, isLoading, isError } = useBeachesQuery();
 
   const [keyword, setKeyword] = useState("");
   const [selectedRisks, setSelectedRisks] = useState<Set<RiskLevel>>(() => new Set());
@@ -54,13 +53,13 @@ export function BeachSearchScreen() {
 
   // 검색어/위험도 필터 후 정렬. 좋아요 상태(liked 정렬)도 의존성에 포함.
   const visibleBeaches = useMemo(() => {
-    const filtered = filterBeaches(beaches ?? [], { keyword, risks: selectedRisks });
+    const filtered = filterBeaches(BEACHES, { keyword, risks: selectedRisks });
     return sortBeaches(filtered, {
       sort,
       origin: location?.point ?? geoOrigin,
       isLiked,
     });
-  }, [beaches, keyword, selectedRisks, sort, location, geoOrigin, isLiked]);
+  }, [keyword, selectedRisks, sort, location, geoOrigin, isLiked]);
 
   // 정렬 변경 핸들러. "가까운 순"이면서 원점(설정 위치/geoOrigin)이 모두 없을 때만 위치 권한 요청
   const handleSortChange = (value: string) => {
@@ -168,16 +167,8 @@ export function BeachSearchScreen() {
           />
         </div>
 
-        {/* 서버 상태별 분기: 로딩/에러/빈 결과/목록 */}
-        {isLoading ? (
-          <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
-            해변 정보를 불러오는 중입니다
-          </p>
-        ) : isError ? (
-          <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
-            해변 정보를 불러오지 못했습니다
-          </p>
-        ) : visibleBeaches.length > 0 ? (
+        {/* 카드 그리드 또는 빈 결과 안내 */}
+        {visibleBeaches.length > 0 ? (
           <div className="grid grid-cols-2 gap-(--gap-3)">
             {visibleBeaches.map((beach) => (
               <PlaceCard

@@ -1,20 +1,14 @@
+import type { BeachSummary } from "@/shared/mocks/beaches.mock";
 import type { MapPoint, RiskLevel } from "@/shared/risk/types";
-import { RISK_ORDER } from "@/shared/risk/types";
-import type { BeachListItem } from "../types";
 
 // 홈 정렬 옵션 값(정렬 Dropdown value와 일치)
 export type BeachSortValue = "riskAsc" | "riskDesc" | "nearest" | "liked";
 
 // 위경도 유클리드 근사 거리 제곱(지구 곡률 무시). 근거리 상대 비교용이라 하버사인 불필요.
-export function squaredDistance(a: MapPoint, b: MapPoint): number {
+function squaredDistance(a: MapPoint, b: MapPoint): number {
   const dx = a.lat - b.lat;
   const dy = a.lng - b.lng;
   return dx * dx + dy * dy;
-}
-
-// 위험 등급 순위(safe=0 ... critical=3). 목록 API엔 riskScore가 없어 등급 인덱스로 정렬.
-function riskRank(risk: RiskLevel): number {
-  return RISK_ORDER.indexOf(risk);
 }
 
 type FilterOptions = {
@@ -23,7 +17,7 @@ type FilterOptions = {
 };
 
 // 검색어(이름 부분일치, 대소문자 무시)와 위험도 다중 선택으로 목록 필터
-export function filterBeaches<T extends BeachListItem>(
+export function filterBeaches<T extends BeachSummary>(
   beaches: readonly T[],
   { keyword, risks }: FilterOptions,
 ): T[] {
@@ -44,7 +38,7 @@ type SortOptions = {
 };
 
 // 선택된 정렬 기준으로 새 배열 반환(원본 불변). 안정 정렬을 위해 index 보조 비교.
-export function sortBeaches<T extends BeachListItem>(
+export function sortBeaches<T extends BeachSummary>(
   beaches: readonly T[],
   { sort, origin, isLiked }: SortOptions,
 ): T[] {
@@ -53,10 +47,9 @@ export function sortBeaches<T extends BeachListItem>(
   withIndex.sort((a, b) => {
     let diff = 0;
     if (sort === "riskAsc") {
-      // 위험도 낮은 순: 등급 인덱스 오름차순
-      diff = riskRank(a.beach.risk) - riskRank(b.beach.risk);
+      diff = a.beach.riskScore - b.beach.riskScore;
     } else if (sort === "riskDesc") {
-      diff = riskRank(b.beach.risk) - riskRank(a.beach.risk);
+      diff = b.beach.riskScore - a.beach.riskScore;
     } else if (sort === "nearest") {
       // 선택 위치가 없으면 정렬 생략(원래 순서 유지)
       if (origin) {
