@@ -44,3 +44,70 @@ export async function getJson<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return envelope.data;
 }
+
+// POST 요청 후 봉투를 언랩. body가 FormData면 Content-Type을 지정하지 않아 브라우저가 boundary를 자동 설정.
+export async function postJson<T>(path: string, body: unknown, init?: RequestInit): Promise<T> {
+  const url = buildUrl(path);
+  const isFormData = body instanceof FormData;
+
+  // FormData가 아닐 때만 Content-Type 지정. init?.headers를 마지막에 spread해 호출자가 덮어쓸 수 있게.
+  const headers = isFormData
+    ? { Accept: "application/json", ...init?.headers }
+    : { Accept: "application/json", "Content-Type": "application/json", ...init?.headers };
+
+  const response = await fetch(url, {
+    method: "POST",
+    ...init,
+    body: isFormData ? body : JSON.stringify(body),
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new ApiError(`요청 실패 (${response.status})`, response.status, path);
+  }
+
+  const envelope = (await response.json()) as ApiEnvelope<T>;
+  if (!envelope.success) {
+    throw new ApiError("API가 실패 응답을 반환했습니다.", response.status, path);
+  }
+  return envelope.data;
+}
+
+// PATCH 요청 후 봉투를 언랩. 항상 JSON body.
+export async function patchJson<T>(path: string, body: unknown, init?: RequestInit): Promise<T> {
+  const url = buildUrl(path);
+  const headers = { Accept: "application/json", "Content-Type": "application/json", ...init?.headers };
+
+  const response = await fetch(url, {
+    method: "PATCH",
+    ...init,
+    body: JSON.stringify(body),
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new ApiError(`요청 실패 (${response.status})`, response.status, path);
+  }
+
+  const envelope = (await response.json()) as ApiEnvelope<T>;
+  if (!envelope.success) {
+    throw new ApiError("API가 실패 응답을 반환했습니다.", response.status, path);
+  }
+  return envelope.data;
+}
+
+// DELETE 요청. 백엔드가 204 No Content를 반환하므로 본문을 파싱하지 않음.
+export async function deleteVoid(path: string, init?: RequestInit): Promise<void> {
+  const url = buildUrl(path);
+  const headers = { Accept: "application/json", ...init?.headers };
+
+  const response = await fetch(url, {
+    method: "DELETE",
+    ...init,
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new ApiError(`요청 실패 (${response.status})`, response.status, path);
+  }
+}

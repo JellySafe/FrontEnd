@@ -3,12 +3,15 @@
 import { Chip, Dropdown } from "@jellysafe/design-system";
 import type { DropdownOption } from "@jellysafe/design-system";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useLikes } from "@/shared/likes/LikesProvider";
 import { useSelectedLocation } from "@/shared/location/SelectedLocationProvider";
 import { RISK_LABEL, RISK_ORDER } from "@/shared/risk/types";
 import type { MapPoint, RiskLevel } from "@/shared/risk/types";
-import { isAlarmTooltipDismissed } from "@/shared/ui/alarm-tooltip-storage";
+import {
+  isAlarmTooltipDismissed,
+  subscribeAlarmTooltip,
+} from "@/shared/ui/alarm-tooltip-storage";
 import { NavigationBar } from "@/shared/ui/NavigationBar";
 import { PUBLIC_NAV_ITEMS } from "@/shared/ui/navigation-items";
 import { PlaceCard } from "@/shared/ui/PlaceCard";
@@ -35,11 +38,12 @@ export function BeachSearchScreen() {
   // 가까운 순 정렬용 위치 원점(설정된 위치가 없을 때 geolocation으로 확보)
   const [geoOrigin, setGeoOrigin] = useState<MapPoint | null>(null);
   // 알림 탭 최초 클릭 전까지만 말풍선 표시(localStorage)
-  const [showAlarmTooltip, setShowAlarmTooltip] = useState(false);
-
-  useEffect(() => {
-    setShowAlarmTooltip(!isAlarmTooltipDismissed());
-  }, []);
+  // 서버 스냅샷은 false로 고정해 하이드레이션 미스매치를 피하고, dismiss 시 스토어 통지로 리렌더
+  const showAlarmTooltip = useSyncExternalStore(
+    subscribeAlarmTooltip,
+    () => !isAlarmTooltipDismissed(),
+    () => false,
+  );
 
   // 가까운 순: 위치 없어도 선택 가능(원점 없으면 기존 순서 유지, Figma와 동일하게 활성 스타일)
   const sortOptions = useMemo<DropdownOption[]>(

@@ -54,3 +54,73 @@ export type PublicBeachRiskResponse = {
   dataConfidence: DataConfidence;
   generatedAt: string | null;
 };
+
+// 알림
+export type AlertEventType = "level_up" | "toxic_report" | "sting_report";
+export type AlertListItemResponse = {
+  notificationId: number;
+  beachId: number;
+  beachName: string | null;
+  // safe|caution|danger|severe|null
+  riskLevel: BackendRiskLevel | null;
+  eventType: AlertEventType;
+  title: string | null;
+  message: string;
+  createdAt: string;
+  // 미읽음이면 null
+  readAt: string | null;
+};
+export type AlertListResponse = {
+  items: AlertListItemResponse[];
+  total: number;
+  page: number;
+  size: number;
+};
+export type AlertReadResponse = { notificationId: number; readAt: string };
+
+// 관심
+export type FavoriteCreateResponse = { favoriteId: number; beachId: number };
+export type FavoriteListItemResponse = {
+  favoriteId: number;
+  beachId: number;
+  beachName: string;
+  region: string;
+  currentRiskLevel: string | null;
+  currentRiskScore: number | null;
+  createdAt: string;
+};
+
+// 제보
+export type ReportImageUploadResponse = { imageUrl: string; thumbnailUrl: string | null };
+export type ReportBackendType = "general" | "multiple" | "sting";
+export type ReportSubmitRequest = {
+  beachId?: number;
+  lat?: number;
+  lng?: number;
+  imageUrl: string;
+  thumbnailUrl?: string;
+  reportType: ReportBackendType;
+  // ISO8601
+  occurredAt: string;
+  consentLogIds: number[];
+  reporterToken?: string;
+};
+export type ReportSubmitResponse = { reportId: number; status: string; aiStatus: string };
+export type ReportStatus =
+  | "received"
+  | "ai_processing"
+  | "ai_done"
+  | "verified"
+  | "rejected"
+  | "hold"
+  | "reflected";
+export type ReportAiResult = "normal" | "toxic_suspected" | "unknown";
+export type ReportResultResponse = {
+  reportId: number;
+  status: ReportStatus;
+  aiResult: ReportAiResult | null;
+  // 0~1
+  aiConfidence: number | null;
+  guideMessage: string;
+  adminReviewStatus: "verified" | "rejected" | "hold" | null;
+};

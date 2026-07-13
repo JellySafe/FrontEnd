@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Button, MapPin } from "@jellysafe/design-system";
 import { KakaoMapCanvas } from "@/shared/map/KakaoMapCanvas";
@@ -13,6 +13,9 @@ import { ChevronLeftIcon } from "./icons";
 const GEOCODE_DEBOUNCE_MS = 300;
 // 초기 중심(제주)
 const JEJU_CENTER: MapPoint = { lat: 33.375, lng: 126.53 };
+
+// geolocation 지원 여부는 런타임 중 바뀌지 않으므로 구독은 no-op(안정 참조)
+const subscribeNoop = () => () => {};
 
 // 어떤 좌표에 대한 주소인지 함께 저장해 로딩 여부를 파생 계산한다.
 type ResolvedAddress = { name: string; detail: string; point: MapPoint };
@@ -46,16 +49,24 @@ export function CurrentLocationScreen({
   const mapRef = useRef<kakao.maps.Map | null>(null);
   const geocoderRef = useRef<kakao.maps.services.Geocoder | null>(null);
 
+  // geolocation 미지원 여부는 클라이언트에서만 판정 가능하므로 외부 스토어로 읽어
+  // 하이드레이션 미스매치를 피한다(서버 스냅샷은 false → 서버에서는 "locating" 유지).
+  const isGeolocationUnsupported = useSyncExternalStore(
+    subscribeNoop,
+    () => typeof navigator !== "undefined" && !navigator.geolocation,
+    () => false,
+  );
+  // 미지원이면 대기할 GPS가 없으므로 즉시 역지오코딩 게이트를 통과시킨다.
+  const isGeoReady = geoStatus === "ready" || isGeolocationUnsupported;
+
   // debounce된 추적 좌표로만 역지오코딩 호출
   const debouncedCenter = useDebouncedValue(trackedCenter, GEOCODE_DEBOUNCE_MS);
 
   // 초기 진입 시 현재 위치로 지도 이동(실패/거부/미지원 시 제주 유지)
   useEffect(() => {
     if (!isMapReady) return;
-    if (!navigator.geolocation) {
-      setGeoStatus("ready");
-      return;
-    }
+    // 미지원 시엔 isGeoReady 파생값이 게이트를 통과시키므로 여기서 별도 처리 불필요
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const point = { lat: position.coords.latitude, lng: position.coords.longitude };
@@ -73,7 +84,7 @@ export function CurrentLocationScreen({
 
   // 중심 좌표 → 주소 역지오코딩 (GPS 확정 후 + debounce가 tracked에 맞춰진 뒤에만)
   useEffect(() => {
-    if (!isMapReady || geoStatus !== "ready") return;
+    if (!isMapReady || !isGeoReady) return;
     // 초기 GPS 직후 debounce가 아직 제주면 조회하지 않음(깜빡임 방지)
     if (
       debouncedCenter.lat !== trackedCenter.lat ||
@@ -103,7 +114,7 @@ export function CurrentLocationScreen({
     return () => {
       isStale = true;
     };
-  }, [debouncedCenter, trackedCenter, isMapReady, geoStatus]);
+  }, [debouncedCenter, trackedCenter, isMapReady, isGeoReady]);
 
   // 현재 중심에 대한 주소가 준비됐는지(로딩/실패 시 설정 비활성)
   const isAddressReady =
