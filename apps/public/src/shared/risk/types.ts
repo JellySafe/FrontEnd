@@ -15,6 +15,13 @@ export type HourlyRisk = {
 export type RiskCause = { title: string; description: string };
 
 export const RISK_LABEL: Record<RiskLevel, string> = { safe: "안전", caution: "주의", danger: "위험", critical: "심각" };
+
+// 데이터 신뢰도 표시 라벨(API는 high/medium/low만 제공, 숫자 %는 사용하지 않음)
+export const CONFIDENCE_LABEL: Record<"high" | "medium" | "low", string> = {
+  high: "높음",
+  medium: "보통",
+  low: "낮음",
+};
 export const RISK_ORDER: RiskLevel[] = ["safe", "caution", "danger", "critical"];
 export const TIME_FRAME_LABEL: Record<TimeFrame, string> = { current: "현재", after24h: "24시간 후", after72h: "72시간 후" };
 
