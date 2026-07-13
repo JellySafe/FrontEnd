@@ -1,0 +1,132 @@
+/* Primitive 토큰 - Figma 스타일가이드 원시 값 (직접 사용 지양, semantic을 통해 참조) */
+:root {
+  /* Primitive Color: primary */
+  --color-primary-95: #020e27;
+  --color-primary-90: #03153a;
+  --color-primary-80: #052461;
+  --color-primary-70: #083691;
+  --color-primary-60: #0b4dd0;
+  --color-primary-50: #256af4;
+  --color-primary-40: #4c85f6;
+  --color-primary-30: #86acf9;
+  --color-primary-20: #b1cafb;
+  --color-primary-10: #d8e4fd;
+  --color-primary-5: #eceffe;
+
+  /* Primitive Color: gray */
+  --color-gray-100: #080808;
+  --color-gray-95: #0b0d0e;
+  --color-gray-90: #17191c;
+  --color-gray-80: #2e3338;
+  --color-gray-70: #444c55;
+  --color-gray-60: #545d68;
+  --color-gray-50: #67717e;
+  --color-gray-40: #8b95a1;
+  --color-gray-30: #aab2bb;
+  --color-gray-20: #c7ccd1;
+  --color-gray-10: #eeeff1;
+  --color-gray-5: #f9fafb;
+  --color-gray-0: #ffffff;
+
+  /* Primitive Color: critical (5~90) */
+  --color-critical-90: #39050b;
+  --color-critical-80: #5c0a14;
+  --color-critical-70: #8a0f1d;
+  --color-critical-60: #bd0f23;
+  --color-critical-50: #de122a;
+  --color-critical-40: #f04256;
+  --color-critical-30: #f47180;
+  --color-critical-20: #f7a1ab;
+  --color-critical-10: #fcd9dd;
+  --color-critical-5: #fdecee;
+
+  /* Primitive Color: danger (5~90) */
+  --color-danger-90: #3b1003;
+  --color-danger-80: #611b05;
+  --color-danger-70: #912808;
+  --color-danger-60: #c2350a;
+  --color-danger-50: #e43e0c;
+  --color-danger-40: #f5683d;
+  --color-danger-30: #f78e6e;
+  --color-danger-20: #fab49e;
+  --color-danger-10: #fde1d8;
+  --color-danger-5: #feefeb;
+
+  /* Primitive Color: caution */
+  --color-caution-95: #241d00;
+  --color-caution-90: #2e2500;
+  --color-caution-80: #423500;
+  --color-caution-70: #614e00;
+  --color-caution-60: #8a6e00;
+  --color-caution-50: #9e7e00;
+  --color-caution-40: #c79f00;
+  --color-caution-30: #ffd014;
+  --color-caution-20: #ffde5c;
+  --color-caution-10: #ffeda3;
+  --color-caution-5: #fff8db;
+
+  /* Primitive Color: safe */
+  --color-safe-95: #0e2017;
+  --color-safe-90: #122b1f;
+  --color-safe-80: #1f4734;
+  --color-safe-70: #285d43;
+  --color-safe-60: #26734e;
+  --color-safe-50: #228756;
+  --color-safe-40: #3fa674;
+  --color-safe-30: #7ec8a4;
+  --color-safe-20: #a9dac2;
+  --color-safe-10: #d8eee3;
+  --color-safe-5: #eaf6f0;
+
+  /* Alpha Color: black (base #000000) */
+  --color-alpha-black-100: rgba(0, 0, 0, 1);
+  --color-alpha-black-75: rgba(0, 0, 0, 0.75);
+  --color-alpha-black-50: rgba(0, 0, 0, 0.5);
+  --color-alpha-black-25: rgba(0, 0, 0, 0.25);
+  --color-alpha-black-10: rgba(0, 0, 0, 0.1);
+  --color-alpha-black-5: rgba(0, 0, 0, 0.05);
+  --color-alpha-black-0: rgba(0, 0, 0, 0);
+
+  /* Alpha Color: white (base #FFFFFF) */
+  --color-alpha-white-100: rgba(255, 255, 255, 1);
+  --color-alpha-white-75: rgba(255, 255, 255, 0.75);
+  --color-alpha-white-50: rgba(255, 255, 255, 0.5);
+  --color-alpha-white-25: rgba(255, 255, 255, 0.25);
+  --color-alpha-white-10: rgba(255, 255, 255, 0.1);
+  --color-alpha-white-5: rgba(255, 255, 255, 0.05);
+  --color-alpha-white-0: rgba(255, 255, 255, 0);
+
+  /* Spacing: gap (Tailwind 기본 --spacing-* 스케일과 분리된 별도 토큰) */
+  --gap-1: 2px;
+  --gap-2: 4px;
+  --gap-3: 8px;
+  --gap-4: 12px;
+  --gap-5: 16px;
+  --gap-6: 20px;
+  --gap-7: 24px;
+  --gap-8: 32px;
+  --gap-9: 40px;
+  --gap-10: 48px;
+  --gap-11: 64px;
+  --gap-12: 80px;
+
+  /* Spacing: padding */
+  --padding-1: 2px;
+  --padding-2: 4px;
+  --padding-3: 8px;
+  --padding-4: 12px;
+  --padding-5: 16px;
+  --padding-6: 20px;
+  --padding-7: 24px;
+  --padding-8: 32px;
+  --padding-9: 40px;
+  --padding-10: 64px;
+
+  /* Icon size (기준 24, 값 기반 네이밍) */
+  --icon-size-12: 12px;
+  --icon-size-16: 16px;
+  --icon-size-20: 20px;
+  --icon-size-24: 24px;
+  --icon-size-32: 32px;
+  --icon-size-40: 40px;
+}

@@ -1,0 +1,104 @@
+/* MapPin focused1 ↔ focused2 오르락내리락 (5px) */
+@keyframes jellysafe-map-pin-bob {
+  from {
+    top: calc(50% - 9.34px);
+  }
+  to {
+    top: calc(50% - 14.34px);
+  }
+}
+
+/* 대시보드 상세 패널: 아래에서 올라오는 등장 */
+@keyframes jellysafe-panel-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+ * Skeleton Pulse (Figma 287:8502)
+ * start(gray-10) → end(gray-20): timeout 0.4s + smart-animate 0.5s ease-out
+ * end → start: timeout 0.5s + smart-animate 0.5s ease-out
+ * 총 주기 1.9s
+ */
+@keyframes jellysafe-skeleton-pulse {
+  0%,
+  21.05% {
+    background-color: var(--color-gray-10);
+  }
+  47.37%,
+  73.68% {
+    background-color: var(--color-gray-20);
+  }
+  100% {
+    background-color: var(--color-gray-10);
+  }
+}
+
+/*
+ * Toast (Figma proto 462:5301 → 462:5446)
+ * top -100 → 32 (Δ132px), SMART_ANIMATE GENTLE ~1.022s
+ */
+@keyframes jellysafe-toast-slide-in {
+  from {
+    transform: translateY(-132px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes jellysafe-toast-slide-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-132px);
+  }
+}
+
+@utility animate-map-pin-bob {
+  animation: jellysafe-map-pin-bob 0.7s ease-in-out infinite alternate;
+}
+
+@utility animate-panel-slide-up {
+  animation: jellysafe-panel-slide-up 0.35s ease-out both;
+}
+
+@utility animate-skeleton-pulse {
+  animation: jellysafe-skeleton-pulse 1.9s ease-out infinite;
+}
+
+@utility animate-toast-slide-in {
+  animation: jellysafe-toast-slide-in 1.022s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@utility animate-toast-slide-out {
+  animation: jellysafe-toast-slide-out 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-map-pin-bob {
+    animation: none;
+    top: calc(50% - 14.34px);
+  }
+
+  .animate-panel-slide-up {
+    animation: none;
+  }
+
+  .animate-skeleton-pulse {
+    animation: none;
+    background-color: var(--color-gray-10);
+  }
+
+  .animate-toast-slide-in,
+  .animate-toast-slide-out {
+    animation: none;
+  }
+}

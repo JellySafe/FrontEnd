@@ -1,0 +1,143 @@
+/* Pretendard Variable self-host (woff2는 /fonts/ 에서 서빙, 다른 에이전트가 배치) */
+@font-face {
+  font-family: "Pretendard Variable";
+  src: url("/fonts/PretendardVariable.woff2") format("woff2");
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 타이포 스케일 - text-{name} 유틸 생성. line-height 1.5, letter-spacing -0.025em 공통 */
+@theme {
+  --font-sans: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+
+  /* heading */
+  --text-heading-xlarge-pc: 40px;
+  --text-heading-xlarge-pc--line-height: 1.5;
+  --text-heading-xlarge-pc--letter-spacing: -0.025em;
+  --text-heading-xlarge-pc--font-weight: 400;
+  --text-heading-xlarge-mobile: 32px;
+  --text-heading-xlarge-mobile--line-height: 1.5;
+  --text-heading-xlarge-mobile--letter-spacing: -0.025em;
+  --text-heading-xlarge-mobile--font-weight: 600;
+
+  --text-heading-large-pc: 32px;
+  --text-heading-large-pc--line-height: 1.5;
+  --text-heading-large-pc--letter-spacing: -0.025em;
+  --text-heading-large-pc--font-weight: 600;
+  --text-heading-large-mobile: 28px;
+  --text-heading-large-mobile--line-height: 1.5;
+  --text-heading-large-mobile--letter-spacing: -0.025em;
+  --text-heading-large-mobile--font-weight: 600;
+
+  --text-heading-medium-pc: 24px;
+  --text-heading-medium-pc--line-height: 1.5;
+  --text-heading-medium-pc--letter-spacing: -0.025em;
+  --text-heading-medium-pc--font-weight: 600;
+  --text-heading-medium-mobile: 20px;
+  --text-heading-medium-mobile--line-height: 1.5;
+  --text-heading-medium-mobile--letter-spacing: -0.025em;
+  --text-heading-medium-mobile--font-weight: 600;
+
+  --text-heading-small-pc: 20px;
+  --text-heading-small-pc--line-height: 1.5;
+  --text-heading-small-pc--letter-spacing: -0.025em;
+  --text-heading-small-pc--font-weight: 600;
+  --text-heading-small-mobile: 18px;
+  --text-heading-small-mobile--line-height: 1.5;
+  --text-heading-small-mobile--letter-spacing: -0.025em;
+  --text-heading-small-mobile--font-weight: 600;
+
+  --text-heading-xsmall-pc: 18px;
+  --text-heading-xsmall-pc--line-height: 1.5;
+  --text-heading-xsmall-pc--letter-spacing: -0.025em;
+  --text-heading-xsmall-pc--font-weight: 600;
+  --text-heading-xsmall-mobile: 16px;
+  --text-heading-xsmall-mobile--line-height: 1.5;
+  --text-heading-xsmall-mobile--letter-spacing: -0.025em;
+  --text-heading-xsmall-mobile--font-weight: 600;
+
+  --text-heading-xxsmall-pc: 16px;
+  --text-heading-xxsmall-pc--line-height: 1.5;
+  --text-heading-xxsmall-pc--letter-spacing: -0.025em;
+  --text-heading-xxsmall-pc--font-weight: 600;
+  --text-heading-xxsmall-mobile: 14px;
+  --text-heading-xxsmall-mobile--line-height: 1.5;
+  --text-heading-xxsmall-mobile--letter-spacing: -0.025em;
+  --text-heading-xxsmall-mobile--font-weight: 600;
+
+  /* body */
+  --text-body-large-pc: 18px;
+  --text-body-large-pc--line-height: 1.5;
+  --text-body-large-pc--letter-spacing: -0.025em;
+  --text-body-large-pc--font-weight: 500;
+  --text-body-large-mobile: 16px;
+  --text-body-large-mobile--line-height: 1.5;
+  --text-body-large-mobile--letter-spacing: -0.025em;
+  --text-body-large-mobile--font-weight: 500;
+
+  --text-body-medium-pc: 18px;
+  --text-body-medium-pc--line-height: 1.5;
+  --text-body-medium-pc--letter-spacing: -0.025em;
+  --text-body-medium-pc--font-weight: 400;
+  --text-body-medium-mobile: 16px;
+  --text-body-medium-mobile--line-height: 1.5;
+  --text-body-medium-mobile--letter-spacing: -0.025em;
+  --text-body-medium-mobile--font-weight: 400;
+
+  --text-body-small-pc: 16px;
+  --text-body-small-pc--line-height: 1.5;
+  --text-body-small-pc--letter-spacing: -0.025em;
+  --text-body-small-pc--font-weight: 600;
+  --text-body-small-mobile: 14px;
+  --text-body-small-mobile--line-height: 1.5;
+  --text-body-small-mobile--letter-spacing: -0.025em;
+  --text-body-small-mobile--font-weight: 600;
+
+  --text-body-xsmall-pc: 16px;
+  --text-body-xsmall-pc--line-height: 1.5;
+  --text-body-xsmall-pc--letter-spacing: -0.025em;
+  --text-body-xsmall-pc--font-weight: 500;
+  --text-body-xsmall-mobile: 14px;
+  --text-body-xsmall-mobile--line-height: 1.5;
+  --text-body-xsmall-mobile--letter-spacing: -0.025em;
+  --text-body-xsmall-mobile--font-weight: 500;
+
+  --text-body-xxsmall-pc: 16px;
+  --text-body-xxsmall-pc--line-height: 1.5;
+  --text-body-xxsmall-pc--letter-spacing: -0.025em;
+  --text-body-xxsmall-pc--font-weight: 400;
+  --text-body-xxsmall-mobile: 14px;
+  --text-body-xxsmall-mobile--line-height: 1.5;
+  --text-body-xxsmall-mobile--letter-spacing: -0.025em;
+  --text-body-xxsmall-mobile--font-weight: 400;
+
+  /* caption */
+  --text-caption-large-pc: 14px;
+  --text-caption-large-pc--line-height: 1.5;
+  --text-caption-large-pc--letter-spacing: -0.025em;
+  --text-caption-large-pc--font-weight: 600;
+  --text-caption-large-mobile: 12px;
+  --text-caption-large-mobile--line-height: 1.5;
+  --text-caption-large-mobile--letter-spacing: -0.025em;
+  --text-caption-large-mobile--font-weight: 600;
+
+  --text-caption-medium-pc: 14px;
+  --text-caption-medium-pc--line-height: 1.5;
+  --text-caption-medium-pc--letter-spacing: -0.025em;
+  --text-caption-medium-pc--font-weight: 500;
+  --text-caption-medium-mobile: 12px;
+  --text-caption-medium-mobile--line-height: 1.5;
+  --text-caption-medium-mobile--letter-spacing: -0.025em;
+  --text-caption-medium-mobile--font-weight: 500;
+
+  --text-caption-small-pc: 14px;
+  --text-caption-small-pc--line-height: 1.5;
+  --text-caption-small-pc--letter-spacing: -0.025em;
+  --text-caption-small-pc--font-weight: 400;
+  --text-caption-small-mobile: 12px;
+  --text-caption-small-mobile--line-height: 1.5;
+  --text-caption-small-mobile--letter-spacing: -0.025em;
+  --text-caption-small-mobile--font-weight: 400;
+}

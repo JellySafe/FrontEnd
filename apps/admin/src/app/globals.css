@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "@jellysafe/design-system/styles.css";
+@source "../shared";
+
+body {
+  /* DS primitive 토큰으로 배경/글자색 연결 (gray-0 = bg-default, gray-90 = text-primary) */
+  background: var(--color-gray-0);
+  color: var(--color-gray-90);
+  font-family: var(--font-sans);
+}

@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "@jellysafe/design-system/styles.css";
+@source "../shared";
+
+html {
+  overscroll-behavior: none;
+}
+
+body {
+  /* DS primitive 토큰: 430 컬럼 바깥(데스크톱)은 surface, 셸/화면은 bg-default(white) 유지 */
+  background: var(--color-gray-5);
+  color: var(--color-gray-90);
+  font-family: var(--font-sans);
+  overscroll-behavior: none;
+}

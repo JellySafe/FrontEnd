@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(set -e)",
+      "Bash(echo on *)",
+      "Bash(ln -sfn ~/.claude/fable/fable.md ~/.claude/fable/active.md)",
+      "Bash(ln -sfn ~/.claude/fable/agents/deep-reasoner.md ~/.claude/agents/deep-reasoner.md)",
+      "Bash(ln -sfn ~/.claude/fable/agents/runner.md ~/.claude/agents/runner.md)",
+      "Bash(python3 /private/tmp/claude-501/-Users-mac-Desktop-jellysafe-front/94cd293c-5360-46c9-9f08-583c9d9e232f/scratchpad/test_gate.py)",
+      "Bash(~/.local/bin/fable status *)",
+      "Bash(zsh -c ' *)",
+      "Bash(claude --version)"
+    ],
+    "additionalDirectories": [
+      "/Users/mac/.claude"
+    ]
+  }
+}

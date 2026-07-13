@@ -1,0 +1,60 @@
+/* 커스텀 스크롤바. Tailwind 내장 scrollbar-thin(scrollbar-width: thin)과 이름 충돌을 피하기 위해
+   scrollbar-indicator를 사용한다. scrollbar-width를 WebKit에 설정하면 ::-webkit-scrollbar가 무시된다.
+   기본은 thumb 투명, 스크롤 중(data-scrolling="true")에만 thumb 표시. */
+.scrollbar-indicator::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+  background: transparent;
+}
+
+.scrollbar-indicator::-webkit-scrollbar-track {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.scrollbar-indicator::-webkit-scrollbar-track-piece {
+  background: transparent;
+  border: none;
+}
+
+.scrollbar-indicator::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: none;
+  box-shadow: none;
+}
+
+.scrollbar-indicator::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.scrollbar-indicator::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.scrollbar-indicator[data-scrolling="true"]::-webkit-scrollbar-thumb {
+  background-color: var(--color-gray-20);
+}
+
+/* Firefox 등 ::-webkit-scrollbar 미지원 브라우저만 표준 속성 사용 */
+@supports not selector(::-webkit-scrollbar) {
+  .scrollbar-indicator {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .scrollbar-indicator[data-scrolling="true"] {
+    scrollbar-color: var(--color-gray-20) transparent;
+  }
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

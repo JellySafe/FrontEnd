@@ -1,0 +1,16 @@
+{
+    "name": "jellysafe",
+    "private": true,
+    "packageManager": "pnpm@10.17.1",
+    "scripts": {
+      "dev": "turbo dev",
+      "dev:public": "pnpm --filter @jellysafe/public dev",
+      "dev:admin": "pnpm --filter @jellysafe/admin dev",
+      "build": "turbo build",
+      "lint": "turbo lint",
+      "typecheck": "turbo typecheck"
+    },
+    "devDependencies": {
+      "turbo": "^2.10.4"
+    }
+  }

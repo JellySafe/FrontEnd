@@ -1,0 +1,8 @@
+@import "./styles/index.css";
+
+@source "./components";
+
+/*
+ * Foundation 토큰(색상, 타이포그래피, 간격, 아이콘 크기)은 styles/ 하위에 정의됨.
+ * radius, shadow는 Figma 스타일가이드 미정의로 아직 추가하지 않음.
+ */
