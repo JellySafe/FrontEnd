@@ -171,8 +171,8 @@ export function CurrentLocationScreen({
           onCenterChanged={setTrackedCenter}
         />
 
-        {/* 중앙 고정 마커: 핀 끝이 지도 중심을 가리키도록 배치 */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-full">
+        {/* 중앙 고정 마커: 핀 끝이 지도 중심. 피드백 반영해 DS 기본(16px) 대비 2배 */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 origin-bottom -translate-x-1/2 -translate-y-full scale-[2]">
           <MapPin status="primary" />
         </div>
 
