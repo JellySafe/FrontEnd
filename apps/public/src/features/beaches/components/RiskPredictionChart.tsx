@@ -1,4 +1,5 @@
 import { Badge } from "@jellysafe/design-system";
+import { useId } from "react";
 import { CONFIDENCE_LABEL, RISK_LABEL, TIME_FRAME_LABEL } from "@/shared/risk/types";
 import type { RiskLevel, TimeFrame } from "@/shared/risk/types";
 import type { BeachRiskPoint } from "../types";
@@ -11,6 +12,13 @@ const BAR_GRADIENT: Record<RiskLevel, string> = {
   critical: "from-[var(--color-critical-50)] to-[color-mix(in_srgb,var(--color-critical-50)_25%,transparent)]",
 };
 
+const RISK_STROKE: Record<RiskLevel, string> = {
+  safe: "var(--color-safe-50)",
+  caution: "var(--color-caution-30)",
+  danger: "var(--color-danger-50)",
+  critical: "var(--color-critical-50)",
+};
+
 const DOT_CLASS: Record<RiskLevel, string> = {
   safe: "bg-[var(--color-safe-50)]",
   caution: "bg-[var(--color-caution-30)]",
@@ -19,6 +27,7 @@ const DOT_CLASS: Record<RiskLevel, string> = {
 };
 
 const PLOT_HEADROOM = 40;
+const LINE_STROKE_WIDTH = 1.5;
 
 const CHART_TIME_FRAMES: TimeFrame[] = ["current", "after24h", "after72h"];
 
@@ -28,7 +37,24 @@ export type RiskPredictionChartProps = {
 };
 
 export function RiskPredictionChart({ timeline, maxBarHeight = 160 }: RiskPredictionChartProps) {
+  const gradientId = useId();
   const pointsByFrame = new Map(timeline.map((point) => [point.timeFrame, point]));
+
+  // 고정 3열 기준 x 좌표. 데이터가 있는 시점만 선으로 연결.
+  const linePoints = CHART_TIME_FRAMES.flatMap((timeFrame, index) => {
+    const point = pointsByFrame.get(timeFrame);
+    if (!point) {
+      return [];
+    }
+    return [
+      {
+        x: ((index + 0.5) / CHART_TIME_FRAMES.length) * 100,
+        y: 100 - point.riskScore,
+        risk: point.risk,
+      },
+    ];
+  });
+  const polylinePoints = linePoints.map((point) => `${point.x},${point.y}`).join(" ");
 
   return (
     <div className="relative flex flex-col gap-(--gap-3) rounded-2xl bg-bg-surface px-(--padding-3) py-(--padding-8)">
@@ -38,6 +64,37 @@ export function RiskPredictionChart({ timeline, maxBarHeight = 160 }: RiskPredic
       </span>
 
       <div className="relative" style={{ height: maxBarHeight + PLOT_HEADROOM }}>
+        {linePoints.length >= 2 ? (
+          <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-0 left-0 w-full"
+            preserveAspectRatio="none"
+            style={{ height: maxBarHeight }}
+            viewBox="0 0 100 100"
+          >
+            <defs>
+              <linearGradient gradientUnits="userSpaceOnUse" id={gradientId} x1="0" x2="100" y1="0" y2="0">
+                {linePoints.map((point) => (
+                  <stop
+                    key={`${point.x}-${point.risk}`}
+                    offset={`${point.x}%`}
+                    stopColor={RISK_STROKE[point.risk]}
+                  />
+                ))}
+              </linearGradient>
+            </defs>
+            <polyline
+              fill="none"
+              points={polylinePoints}
+              stroke={`url(#${gradientId})`}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={LINE_STROKE_WIDTH}
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        ) : null}
+
         <div className="grid h-full auto-cols-fr grid-flow-col">
           {CHART_TIME_FRAMES.map((timeFrame) => {
             const point = pointsByFrame.get(timeFrame);
