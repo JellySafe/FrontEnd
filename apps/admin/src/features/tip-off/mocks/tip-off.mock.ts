@@ -10,11 +10,3 @@ export function getTipOffDetail(item: TipOffListItem): TipOffDetail {
       [item.beach, item.address].filter(Boolean).join(" · ") || "위치 정보 없음",
   };
 }
-
-export function reviewDecisionToAdminStatus(
-  decision: "approved" | "pending" | "rejected",
-): TipOffListItem["adminStatus"] {
-  if (decision === "approved") return "approved";
-  if (decision === "pending") return "pending";
-  return "rejected";
-}

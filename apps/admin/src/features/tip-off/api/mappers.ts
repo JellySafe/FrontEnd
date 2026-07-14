@@ -1,13 +1,18 @@
 import type {
+  BackendRejectReason,
   BackendReportStatus,
   BackendReportType,
+  BackendReviewStatus,
   LatestRiskResponse,
   ReportListItemResponse,
+  ReviewReportRequest,
 } from "@/shared/api/types";
 import { formatDateTime, toRiskLevel } from "@/shared/risk/mappers";
 import type { RiskLevel } from "@/shared/risk/types";
 import type {
   AdminStatus,
+  RejectReason,
+  ReviewDecision,
   ThumbnailState,
   TipOffListItem,
   TipOffReportType,
@@ -58,7 +63,7 @@ function mapReportType(type: BackendReportType): TipOffReportType {
   }
 }
 
-function mapAdminStatus(status: BackendReportStatus): AdminStatus {
+export function mapAdminStatus(status: BackendReportStatus): AdminStatus {
   switch (status) {
     case "ai_done":
     case "received":
@@ -72,6 +77,46 @@ function mapAdminStatus(status: BackendReportStatus): AdminStatus {
     case "rejected":
       return "rejected";
   }
+}
+
+function mapRejectReason(reason: Exclude<RejectReason, null>): BackendRejectReason {
+  switch (reason) {
+    case "not-jellyfish":
+      return "not_jellyfish";
+    case "unclear-photo":
+      return "unclear";
+    case "duplicate":
+      return "duplicate";
+    case "location-error":
+      return "wrong_location";
+  }
+}
+
+function mapReviewStatus(decision: Exclude<ReviewDecision, null>): BackendReviewStatus {
+  switch (decision) {
+    case "approved":
+      return "verified";
+    case "pending":
+      return "hold";
+    case "rejected":
+      return "rejected";
+  }
+}
+
+export function toReviewRequest(
+  decision: Exclude<ReviewDecision, null>,
+  rejectReason: RejectReason,
+): ReviewReportRequest {
+  const reviewStatus = mapReviewStatus(decision);
+
+  if (decision === "rejected" && rejectReason) {
+    return {
+      reviewStatus,
+      rejectReason: mapRejectReason(rejectReason),
+    };
+  }
+
+  return { reviewStatus };
 }
 
 export function toTipOffListItem(

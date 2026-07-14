@@ -2,8 +2,12 @@
 
 import { Dropdown } from "@jellysafe/design-system";
 import { useCallback, useMemo, useState } from "react";
+import { clearAdminSession } from "@/features/admin-auth/model/admin-session";
+import { ApiError } from "@/shared/api/http-client";
 import { CloseIcon } from "@/shared/ui/icons";
-import { getTipOffDetail, reviewDecisionToAdminStatus } from "../mocks/tip-off.mock";
+import { mapAdminStatus, toReviewRequest } from "../api/mappers";
+import { reviewReport } from "../api/reports-api";
+import { getTipOffDetail } from "../mocks/tip-off.mock";
 import { useTipOffListState } from "../hooks/useTipOffListState";
 import {
   SORT_LABEL,
@@ -25,6 +29,8 @@ export function TipOffView() {
   const [reviewDecision, setReviewDecision] = useState<ReviewDecision>(null);
   const [rejectReason, setRejectReason] = useState<RejectReason>(null);
   const [imagePreview, setImagePreview] = useState<ImagePreviewState>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const selectedRow = useMemo(
     () => listState.rows.find((row) => row.id === listState.selectedId) ?? null,
@@ -45,6 +51,7 @@ export function TipOffView() {
     listState.setSelectedId(id);
     setReviewDecision(null);
     setRejectReason(null);
+    setReviewError(null);
     setScreen("detail");
   };
 
@@ -53,14 +60,33 @@ export function TipOffView() {
     listState.setSelectedId(null);
     setReviewDecision(null);
     setRejectReason(null);
+    setReviewError(null);
     setImagePreview(null);
   }, [listState.setSelectedId]);
 
-  const handleSubmitReview = () => {
-    if (!selectedRow || !reviewDecision) return;
-    const adminStatus = reviewDecisionToAdminStatus(reviewDecision);
-    listState.updateRowStatus(selectedRow.id, adminStatus);
-    handleBackToList();
+  const handleSubmitReview = async () => {
+    if (!selectedRow || !reviewDecision || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setReviewError(null);
+
+    try {
+      const response = await reviewReport(
+        Number(selectedRow.id),
+        toReviewRequest(reviewDecision, rejectReason),
+      );
+      listState.updateRowStatus(selectedRow.id, mapAdminStatus(response.reportStatus));
+      handleBackToList();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        clearAdminSession();
+        window.location.assign("/login");
+        return;
+      }
+      setReviewError("검수 저장에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // 로드 실패 썸네일 재시도 시 원본 URL로 다시 로드한다.
@@ -82,6 +108,7 @@ export function TipOffView() {
           onRejectReasonChange={setRejectReason}
           onReviewDecisionChange={(decision) => {
             setReviewDecision(decision);
+            setReviewError(null);
             if (decision !== "rejected") {
               setRejectReason(null);
             }
@@ -89,6 +116,8 @@ export function TipOffView() {
           onSubmit={handleSubmitReview}
           rejectReason={rejectReason}
           reviewDecision={reviewDecision}
+          isSubmitting={isSubmitting}
+          submitError={reviewError}
         />
         {imagePreview && imagePreview.tipOffId === detail.id ? (
           <TipOffImagePreviewModal

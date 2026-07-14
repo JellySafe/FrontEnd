@@ -180,3 +180,24 @@ export type ReportListItemResponse = {
   thumbnailUrl: string | null;
   submittedAt: string;
 };
+
+export type BackendReviewStatus = "verified" | "rejected" | "hold";
+
+export type BackendRejectReason =
+  | "not_jellyfish"
+  | "unclear"
+  | "duplicate"
+  | "wrong_location"
+  | "inappropriate";
+
+export type ReviewReportRequest = {
+  reviewStatus: BackendReviewStatus;
+  rejectReason?: BackendRejectReason;
+};
+
+export type ReviewReportResponse = {
+  reportId: number;
+  reviewStatus: BackendReviewStatus;
+  reportStatus: BackendReportStatus;
+  reflectedRisk: boolean;
+};

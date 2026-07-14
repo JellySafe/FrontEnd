@@ -139,3 +139,30 @@ export async function postJson<T>(path: string, body: unknown, init?: RequestIni
   }
   return envelope.data;
 }
+
+export async function patchJson<T>(path: string, body: unknown, init?: RequestInit): Promise<T> {
+  const url = buildUrl(path);
+
+  const response = await fetch(url, {
+    method: "PATCH",
+    ...init,
+    body: JSON.stringify(body),
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...mergeAuthHeaders(init?.headers),
+    },
+  });
+
+  const responseBody: unknown = await response.json();
+
+  if (!response.ok) {
+    throwApiError(responseBody, response.status, path, `요청 실패 (${response.status})`);
+  }
+
+  const envelope = responseBody as ApiEnvelope<T>;
+  if (!envelope.success) {
+    throwApiError(responseBody, response.status, path, "API가 실패 응답을 반환했습니다.");
+  }
+  return envelope.data;
+}

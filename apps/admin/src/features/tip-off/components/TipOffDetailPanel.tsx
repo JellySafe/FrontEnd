@@ -20,6 +20,8 @@ export type TipOffDetailPanelProps = {
   onRejectReasonChange: (reason: RejectReason) => void;
   onImageClick: (index: number) => void;
   onSubmit: () => void;
+  isSubmitting?: boolean;
+  submitError?: string | null;
 };
 
 function canSubmitReview(decision: ReviewDecision, reason: RejectReason): boolean {
@@ -36,8 +38,10 @@ export function TipOffDetailPanel({
   onRejectReasonChange,
   onImageClick,
   onSubmit,
+  isSubmitting = false,
+  submitError = null,
 }: TipOffDetailPanelProps) {
-  const isSubmitEnabled = canSubmitReview(reviewDecision, rejectReason);
+  const isSubmitEnabled = canSubmitReview(reviewDecision, rejectReason) && !isSubmitting;
 
   return (
     <div className="flex flex-col gap-(--gap-8)">
@@ -72,6 +76,10 @@ export function TipOffDetailPanel({
         reviewDecision={reviewDecision}
       />
 
+      {submitError ? (
+        <p className="text-caption-small-pc text-text-error">{submitError}</p>
+      ) : null}
+
       <Button
         className="w-full"
         disabled={!isSubmitEnabled}
@@ -79,7 +87,7 @@ export function TipOffDetailPanel({
         size="medium"
         variant="primary"
       >
-        검수 완료
+        {isSubmitting ? "저장 중..." : "검수 완료"}
       </Button>
     </div>
   );
