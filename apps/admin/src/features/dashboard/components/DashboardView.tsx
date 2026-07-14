@@ -43,12 +43,12 @@ function DashboardStatsSkeleton() {
   return (
     <section className="flex flex-col gap-(--gap-3)">
       <div className="flex flex-col gap-(--gap-2)">
-        <Skeleton className="h-[24px] w-[180px] rounded-md" />
-        <Skeleton className="h-[16px] w-[140px] rounded-md" />
+        <Skeleton className="h-[27px] w-[180px] rounded-md" />
+        <Skeleton className="h-[21px] w-[140px] rounded-md" />
       </div>
       <div className="grid grid-cols-5 gap-(--gap-4)">
         {Array.from({ length: 5 }).map((_, index) => (
-          <Skeleton className="h-[120px] rounded-2xl" key={index} />
+          <Skeleton className="h-[158px] rounded-2xl" key={index} />
         ))}
       </div>
     </section>
@@ -66,11 +66,11 @@ function DashboardMapSkeleton() {
     >
       <span className="sr-only">현황을 불러오는 중</span>
       <div className="flex h-full w-[413px] shrink-0 flex-col gap-(--gap-3) pr-(--padding-6)">
-        <Skeleton className="h-[48px] w-full rounded-lg" />
-        <Skeleton className="ml-auto h-[16px] w-[64px] rounded-md" />
+        <Skeleton className="h-[42px] w-full rounded-lg" />
+        <Skeleton className="ml-auto h-[21px] w-[64px] rounded-md" />
         <div className="flex min-h-0 flex-1 flex-col gap-(--gap-2)">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton className="h-[72px] w-full rounded-lg" key={index} />
+            <Skeleton className="h-[107px] w-full rounded-lg" key={index} />
           ))}
         </div>
       </div>

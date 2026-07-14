@@ -14,8 +14,9 @@ export function ReportLoadingSkeleton() {
       </span>
 
       <div className="flex flex-col gap-(--gap-3)">
-        <Skeleton className="h-10 w-20 rounded-2xl" />
+        <Skeleton className="h-[27px] w-20 rounded-md" />
         <Skeleton className="h-[104px] w-full rounded-2xl" />
+        <Skeleton className="h-2 w-full rounded-lg" />
       </div>
 
       <div className="flex gap-(--gap-3)">
@@ -25,21 +26,18 @@ export function ReportLoadingSkeleton() {
       </div>
 
       <div className="flex flex-col gap-(--gap-3)">
-        <Skeleton className="h-10 w-[99px] rounded-2xl" />
-        <Skeleton className="h-[416px] w-full rounded-2xl" />
+        <Skeleton className="h-[27px] w-[99px] rounded-md" />
+        <Skeleton className="h-[348px] w-full rounded-2xl" />
       </div>
 
       <div className="flex flex-col gap-(--gap-3)">
-        <Skeleton className="h-10 w-[65px] rounded-2xl" />
+        <Skeleton className="h-[27px] w-[65px] rounded-md" />
         <Skeleton className="h-[320px] w-full rounded-2xl" />
       </div>
 
       <div className="flex flex-col gap-(--gap-3)">
-        <Skeleton className="h-10 w-[65px] rounded-2xl" />
-        <div className="flex flex-col items-end gap-(--gap-2)">
-          <Skeleton className="h-[436px] w-full rounded-2xl" />
-          <Skeleton className="h-12 w-[120px] rounded-2xl" />
-        </div>
+        <Skeleton className="h-[27px] w-[65px] rounded-md" />
+        <Skeleton className="h-[488px] w-full rounded-lg" />
       </div>
     </div>
   );

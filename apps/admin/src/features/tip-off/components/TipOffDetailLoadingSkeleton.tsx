@@ -15,41 +15,43 @@ export function TipOffDetailLoadingSkeleton() {
 
       <div className="grid grid-cols-1 gap-(--gap-3) xl:grid-cols-[514px_minmax(0,1fr)]">
         <div className="flex flex-col gap-(--gap-3)">
-          <Skeleton className="h-7 w-12 rounded-md" />
+          <Skeleton className="h-[27px] w-12 rounded-md" />
           <Skeleton className="h-[385px] w-full rounded-2xl" />
         </div>
         <div className="flex flex-col gap-(--gap-3)">
-          <Skeleton className="h-7 w-12 rounded-md" />
+          <Skeleton className="h-[27px] w-12 rounded-md" />
           <Skeleton className="h-[385px] w-full rounded-2xl" />
         </div>
       </div>
 
       <div className="flex flex-col gap-(--gap-3)">
-        <Skeleton className="h-7 w-20 rounded-md" />
-        <Skeleton className="h-5 w-32 rounded-md" />
+        <Skeleton className="h-[27px] w-20 rounded-md" />
+        <Skeleton className="h-[24px] w-32 rounded-md" />
       </div>
 
       <div className="flex flex-col gap-(--gap-3)">
         <div className="flex flex-wrap items-center gap-(--gap-2)">
-          <Skeleton className="h-7 w-28 rounded-md" />
-          <Skeleton className="h-5 w-20 rounded-md" />
+          <Skeleton className="h-[27px] w-28 rounded-md" />
+          <Skeleton className="h-[24px] w-20 rounded-md" />
         </div>
-        <Skeleton className="h-5 w-40 rounded-md" />
+        <Skeleton className="h-[24px] w-40 rounded-md" />
       </div>
 
       <section className="flex flex-col gap-(--gap-8)">
         <div className="flex flex-col gap-(--gap-3)">
-          <Skeleton className="h-7 w-20 rounded-md" />
-          <Skeleton className="h-4 w-48 rounded-md" />
+          <div className="flex flex-col">
+            <Skeleton className="h-[27px] w-20 rounded-md" />
+            <Skeleton className="h-[21px] w-48 rounded-md" />
+          </div>
           <div className="flex flex-wrap gap-(--gap-2)">
-            <Skeleton className="h-9 w-16 rounded-full" />
-            <Skeleton className="h-9 w-16 rounded-full" />
-            <Skeleton className="h-9 w-16 rounded-full" />
+            {[0, 1, 2].map((i) => (
+              <Skeleton className="h-[30px] w-16 rounded-lg" key={i} />
+            ))}
           </div>
         </div>
       </section>
 
-      <Skeleton className="h-12 w-full rounded-2xl" />
+      <Skeleton className="h-[48px] w-full rounded-lg" />
     </div>
   );
 }

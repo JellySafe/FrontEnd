@@ -14,27 +14,27 @@ export function DetailedMapLoadingSkeleton() {
       </span>
 
       <div className="flex flex-wrap items-center gap-(--gap-3)">
-        <Skeleton className="h-5 w-40 rounded-md" />
-        <Skeleton className="h-5 w-px rounded-none" />
-        <Skeleton className="h-5 w-32 rounded-md" />
-        <Skeleton className="h-5 w-px rounded-none" />
-        <Skeleton className="h-5 w-36 rounded-md" />
+        <Skeleton className="h-[21px] w-40 rounded-md" />
+        <Skeleton className="h-[20px] w-px rounded-none" />
+        <Skeleton className="h-[21px] w-32 rounded-md" />
+        <Skeleton className="h-[20px] w-px rounded-none" />
+        <Skeleton className="h-[21px] w-36 rounded-md" />
       </div>
 
       <div className="grid grid-cols-1 gap-(--gap-7) lg:grid-cols-2">
         <section className="flex flex-col gap-(--gap-3)">
-          <Skeleton className="h-7 w-36 rounded-md" />
-          <Skeleton className="h-[250px] w-full rounded-2xl" />
+          <Skeleton className="h-[27px] w-36 rounded-md" />
+          <Skeleton className="h-[337px] w-full rounded-2xl" />
         </section>
         <section className="flex flex-col gap-(--gap-3)">
-          <Skeleton className="h-7 w-32 rounded-md" />
-          <Skeleton className="h-10 w-full rounded-2xl" />
-          <Skeleton className="h-[200px] w-full rounded-2xl" />
+          <Skeleton className="h-[27px] w-32 rounded-md" />
+          <Skeleton className="h-[33px] w-full rounded-2xl" />
+          <Skeleton className="h-[296px] w-full rounded-2xl" />
         </section>
       </div>
 
       <section className="flex flex-col gap-(--gap-4)">
-        <Skeleton className="h-7 w-24 rounded-md" />
+        <Skeleton className="h-[27px] w-24 rounded-md" />
         <ul className="flex flex-col">
           {[0, 1, 2].map((index) => (
             <li
@@ -43,11 +43,11 @@ export function DetailedMapLoadingSkeleton() {
             >
               <div className="flex flex-col gap-(--gap-3) p-(--padding-7)">
                 <div className="flex items-center gap-(--gap-3)">
-                  <Skeleton className="h-6 w-14 rounded-full" />
-                  <Skeleton className="h-5 min-w-0 flex-1 rounded-md" />
-                  <Skeleton className="h-5 w-20 shrink-0 rounded-md" />
+                  <Skeleton className="h-[25px] w-14 rounded-sm" />
+                  <Skeleton className="h-[24px] min-w-0 flex-1 rounded-md" />
+                  <Skeleton className="h-[24px] w-20 shrink-0 rounded-md" />
                 </div>
-                <Skeleton className="h-4 w-full rounded-md" />
+                <Skeleton className="h-[21px] w-full rounded-md" />
               </div>
             </li>
           ))}
