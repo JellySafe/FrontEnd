@@ -3,6 +3,8 @@
 import { Badge, LoadingSpinner } from "@jellysafe/design-system";
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { TIP_OFF_THUMB_PLACEHOLDER } from "../api/mappers";
 import { useScrollIndicator } from "@/shared/hooks/useScrollIndicator";
 import { RISK_LABEL } from "@/shared/risk/types";
 import { RefreshIcon } from "@/shared/ui/icons";
@@ -224,14 +226,25 @@ function ThumbnailCell({
     );
   }
 
+  return <ThumbnailImage row={row} />;
+}
+
+function ThumbnailImage({ row }: { row: TipOffListItem }) {
+  const [src, setSrc] = useState(row.thumbnailSrc!);
+
+  useEffect(() => {
+    setSrc(row.thumbnailSrc!);
+  }, [row.thumbnailSrc]);
+
   return (
     <div className="relative h-[138px] w-[184px] overflow-hidden rounded-lg bg-bg-surface">
       <Image
         alt={`${row.title} 썸네일`}
         className="object-cover"
         fill
+        onError={() => setSrc(TIP_OFF_THUMB_PLACEHOLDER)}
         sizes="184px"
-        src={row.thumbnailSrc}
+        src={src}
       />
     </div>
   );

@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { TIP_OFF_THUMB_PLACEHOLDER } from "../api/mappers";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/shared/ui/icons";
 
 export type TipOffImageGalleryProps = {
@@ -12,6 +13,11 @@ export type TipOffImageGalleryProps = {
 // Figma: 우하단 pagination (← 1/N →), white10 원형 버튼 + inverse 카운터, 하단 그라데이션.
 export function TipOffImageGallery({ images, onImageClick }: TipOffImageGalleryProps) {
   const [index, setIndex] = useState(0);
+  const [src, setSrc] = useState(images[0] ?? TIP_OFF_THUMB_PLACEHOLDER);
+
+  useEffect(() => {
+    setSrc(images[index] ?? TIP_OFF_THUMB_PLACEHOLDER);
+  }, [images, index]);
 
   if (images.length === 0) {
     return (
@@ -40,8 +46,9 @@ export function TipOffImageGallery({ images, onImageClick }: TipOffImageGalleryP
             alt={`제보 사진 ${index + 1}`}
             className="object-cover"
             fill
+            onError={() => setSrc(TIP_OFF_THUMB_PLACEHOLDER)}
             sizes="(max-width: 1440px) 50vw, 514px"
-            src={images[index]}
+            src={src}
           />
           <span
             aria-hidden="true"

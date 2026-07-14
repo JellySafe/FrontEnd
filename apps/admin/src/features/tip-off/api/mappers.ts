@@ -17,17 +17,19 @@ export function buildRiskByBeachId(items: LatestRiskResponse[]): Map<number, Ris
   return new Map(items.map((item) => [item.beachId, toRiskLevel(item.riskLevel)]));
 }
 
+export const TIP_OFF_THUMB_PLACEHOLDER = "/assets/tip-off/thumbnail-placeholder.png";
+
 export function resolveMediaUrl(url: string | null): { state: ThumbnailState; src?: string } {
   if (!url) return { state: "empty" };
 
   if (url.startsWith("http://") || url.startsWith("https://")) {
     try {
       const parsed = new URL(url);
-      // demo.jellysafe.local 등 플레이스홀더 → /uploads/... same-origin
-      if (
-        parsed.hostname === "demo.jellysafe.local" ||
-        parsed.pathname.startsWith("/uploads/")
-      ) {
+      // 백엔드 데모 플레이스홀더(실파일 없음) → 로컬 에셋
+      if (parsed.hostname === "demo.jellysafe.local") {
+        return { state: "loaded", src: TIP_OFF_THUMB_PLACEHOLDER };
+      }
+      if (parsed.pathname.startsWith("/uploads/")) {
         return { state: "loaded", src: parsed.pathname };
       }
       return { state: "loaded", src: url };
