@@ -8,18 +8,6 @@ import type { AnalysisResult, SubmittedReport } from "../types";
 import { formatReportDateTime } from "../utils/format-date-time";
 import { CheckCircleIcon, XCircleIcon } from "./icons";
 
-// 결과 종류별 안내문(판별 불가/오류는 안내문 없음)
-const NOTICE_BY_KIND: Partial<Record<AnalysisResult["kind"], string[]>> = {
-  general: [
-    "독성이 확인되지 않은 해파리로 추정됩니다.",
-    "해변 이용 시 접촉을 피하고 주변을 주의해 주세요.",
-  ],
-  toxic: [
-    "AI가 독성 해파리일 가능성을 감지했습니다.",
-    "안전을 위해 입수를 자제해 주세요.",
-  ],
-};
-
 export type ReportResultScreenProps = {
   result: AnalysisResult;
   report: SubmittedReport;
@@ -31,7 +19,11 @@ export type ReportResultScreenProps = {
 export function ReportResultScreen({ result, report, onRetry, onReset }: ReportResultScreenProps) {
   const router = useRouter();
   const isError = result.kind === "error";
-  const notice = NOTICE_BY_KIND[result.kind];
+  // 서버 안내문(guideMessage)을 개행 기준으로 분리해 문단으로 렌더. error에는 안내문 없음.
+  const guideMessage = result.kind === "error" ? undefined : result.guideMessage;
+  const noticeLines = guideMessage
+    ? guideMessage.split("\n").filter((line) => line.trim().length > 0)
+    : [];
 
   return (
     <div className={`flex min-h-dvh flex-col bg-bg-default ${PUBLIC_APP_MAX_WIDTH_CLASS}`}>
@@ -69,36 +61,39 @@ export function ReportResultScreen({ result, report, onRetry, onReset }: ReportR
           </div>
         )}
 
-        {notice ? (
+        {noticeLines.length > 0 ? (
           <div className="text-body-xxsmall-mobile text-text-secondary">
-            {notice.map((line) => (
+            {noticeLines.map((line) => (
               <p key={line}>{line}</p>
             ))}
           </div>
         ) : null}
 
-        {/* AI 판별 결과 카드 */}
-        <div className="flex w-full flex-col gap-(--gap-2)">
-          <div className="flex w-full flex-col gap-(--gap-2) rounded-2xl bg-bg-surface p-(--padding-5)">
-            <p className="text-caption-medium-mobile text-text-tertiary">AI 판별 결과</p>
-            {result.kind === "general" || result.kind === "toxic" ? (
-              <div className="flex flex-col gap-(--gap-1)">
-                <div className="flex items-center gap-(--gap-2) text-body-large-mobile">
-                  <span className="text-text-primary">{result.label}</span>
-                  <span className="text-text-brand">{result.probability}%</span>
+        {/* AI 판별 결과 카드(오류 케이스는 카드 미표시) */}
+        {isError ? null : (
+          <div className="flex w-full flex-col gap-(--gap-2)">
+            <div className="flex w-full flex-col gap-(--gap-2) rounded-2xl bg-bg-surface p-(--padding-5)">
+              <p className="text-caption-medium-mobile text-text-tertiary">AI 판별 결과</p>
+              {result.kind === "general" || result.kind === "toxic" ? (
+                <div className="flex flex-col gap-(--gap-1)">
+                  <div className="flex items-center gap-(--gap-2) text-body-large-mobile">
+                    <span className="text-text-primary">{result.label}</span>
+                  </div>
+                  {result.confidence !== null ? (
+                    <p className="text-caption-small-mobile text-text-tertiary">
+                      신뢰도 {result.confidence}%
+                    </p>
+                  ) : null}
                 </div>
-                <p className="text-caption-small-mobile text-text-tertiary">
-                  신뢰도 {result.confidence}%
-                </p>
-              </div>
-            ) : (
-              <p className="text-body-large-mobile text-text-primary">판별 불가</p>
-            )}
+              ) : (
+                <p className="text-body-large-mobile text-text-primary">판별 불가</p>
+              )}
+            </div>
+            <p className="px-(--padding-5) text-caption-small-mobile text-text-tertiary">
+              AI 결과는 참고용이며 관리자 확인 전까지 확정이 아닙니다.
+            </p>
           </div>
-          <p className="px-(--padding-5) text-caption-small-mobile text-text-tertiary">
-            AI 결과는 참고용이며 관리자 확인 전까지 확정이 아닙니다.
-          </p>
-        </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-(--gap-3) px-(--padding-5) pb-(--padding-8)">
