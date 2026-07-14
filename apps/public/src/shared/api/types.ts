@@ -42,12 +42,20 @@ export type BeachDetailResponse = {
   updatedAt: string;
 };
 
+// GET /api/public/beaches/{beachId}/risk — 위험 원인 태그
+export type PublicRiskFactorResponse = {
+  code: string;
+  name: string;
+  detail: string;
+  scoreDelta: number;
+};
+
 // GET /api/public/beaches/{beachId}/risk — 시점별 예측 포인트
 export type PublicRiskPointResponse = {
   horizon: BackendHorizon;
   riskLevel: BackendRiskLevel;
   riskScore: number;
-  factors: string[];
+  factors: PublicRiskFactorResponse[];
   dataConfidence: DataConfidence;
   generatedAt: string | null;
 };
@@ -60,7 +68,7 @@ export type PublicBeachRiskResponse = {
   horizon: BackendHorizon;
   riskLevel: BackendRiskLevel;
   riskScore: number;
-  factors: string[];
+  factors: PublicRiskFactorResponse[];
   guideText: string;
   dataConfidence: DataConfidence;
   generatedAt: string | null;
@@ -135,4 +143,16 @@ export type ReportResultResponse = {
   aiConfidence: number | null;
   guideMessage: string;
   adminReviewStatus: "verified" | "rejected" | "hold" | null;
+};
+
+// GET /api/public/guides
+export type GuideTargetType = "public" | "admin";
+export type PublicGuideResponse = {
+  id: number;
+  guideCode: string;
+  targetType: GuideTargetType;
+  riskLevel: BackendRiskLevel | null;
+  title: string;
+  body: string;
+  displayOrder: number;
 };

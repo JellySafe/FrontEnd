@@ -55,6 +55,30 @@ function DashboardStatsSkeleton() {
   );
 }
 
+// 목록 + 지도 자리 스켈레톤 (로딩 문구 대체)
+function DashboardMapSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      className="flex min-h-[453px] min-w-0 flex-1"
+      role="status"
+    >
+      <span className="sr-only">현황을 불러오는 중</span>
+      <div className="flex h-full w-[413px] shrink-0 flex-col gap-(--gap-3) pr-(--padding-6)">
+        <Skeleton className="h-[48px] w-full rounded-lg" />
+        <Skeleton className="ml-auto h-[16px] w-[64px] rounded-md" />
+        <div className="flex min-h-0 flex-1 flex-col gap-(--gap-2)">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton className="h-[72px] w-full rounded-lg" key={index} />
+          ))}
+        </div>
+      </div>
+      <Skeleton className="min-h-0 min-w-0 flex-1 rounded-2xl" />
+    </div>
+  );
+}
+
 export function DashboardView() {
   const [query, setQuery] = useState("");
   const [appliedFilter, setAppliedFilter] = useState<DashboardFilterState>(EMPTY_FILTER);
@@ -164,9 +188,7 @@ export function DashboardView() {
         <h2 className="text-heading-xsmall-pc text-text-primary">위험도 지도</h2>
         <div className="flex min-h-[453px] min-w-0 flex-1">
           {isLoading && beaches.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center">
-              <p className="text-body-xsmall-pc text-text-tertiary">현황을 불러오는 중입니다</p>
-            </div>
+            <DashboardMapSkeleton />
           ) : (
             <>
               <DashboardList

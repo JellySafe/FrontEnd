@@ -3,6 +3,7 @@ import type {
   BeachDetailResponse,
   BeachListItemResponse,
   PublicBeachRiskResponse,
+  PublicRiskFactorResponse,
   PublicRiskPointResponse,
 } from "@/shared/api/types";
 import { toRiskLevel } from "@/shared/risk/mappers";
@@ -39,9 +40,12 @@ export function toBeachDetailInfo(dto: BeachDetailResponse): BeachDetailInfo {
   };
 }
 
-// factors(문자열 배열) -> 현재 시점 원인. description은 없으므로 빈 문자열.
-function toCauses(factors: string[]): RiskCause[] {
-  return factors.map((factor) => ({ title: factor, description: "" }));
+// factors 객체 -> UI용 원인(name=제목, detail=한 줄 설명)
+function toCauses(factors: PublicRiskFactorResponse[]): RiskCause[] {
+  return factors.map((factor) => ({
+    title: factor.name,
+    description: factor.detail,
+  }));
 }
 
 // 백엔드 horizon -> 프론트 TimeFrame. 6h는 매핑 불가.
@@ -95,7 +99,7 @@ export function toBeachRiskInfo(dto: PublicBeachRiskResponse): BeachRiskInfo {
   return {
     risk: toRiskLevel(dto.riskLevel),
     riskScore: dto.riskScore,
-    factors: dto.factors,
+    factors: dto.factors.map((factor) => factor.name),
     guideText: dto.guideText,
     confidence: dto.dataConfidence,
     causes: toCauses(dto.factors),

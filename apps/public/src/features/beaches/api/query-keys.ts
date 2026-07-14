@@ -4,4 +4,6 @@ export const beachesQueryKeys = {
   list: () => [...beachesQueryKeys.all, "list"] as const,
   detail: (beachId: number) => [...beachesQueryKeys.all, "detail", beachId] as const,
   risk: (beachId: number) => [...beachesQueryKeys.all, "risk", beachId] as const,
+  guides: () => [...beachesQueryKeys.all, "guides"] as const,
+  guidesFirstAid: () => [...beachesQueryKeys.guides(), "FIRST_AID"] as const,
 };

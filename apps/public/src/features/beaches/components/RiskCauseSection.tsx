@@ -71,7 +71,6 @@ export function RiskCauseSection({ causesByFrame }: RiskCauseSectionProps) {
                 >
                   {cause.title}
                 </button>
-                {/* description이 있을 때만 렌더(현재 API는 title만 제공) */}
                 {cause.description && !collapsed.has(cause.title) ? (
                   <p className="text-body-xxsmall-mobile text-text-secondary">{cause.description}</p>
                 ) : null}

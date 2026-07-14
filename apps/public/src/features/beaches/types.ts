@@ -42,7 +42,7 @@ export type BeachRiskInfo = {
   factors: string[];
   guideText: string;
   confidence: DataConfidence;
-  // 현재 시점 위험 원인(factors -> title만 채운 RiskCause)
+  // 현재 시점 위험 원인(name + detail)
   causes: RiskCause[];
   // now → 24h → 72h 순. 없는 시점은 배열에서 생략될 수 있음.
   timeline: BeachRiskPoint[];
