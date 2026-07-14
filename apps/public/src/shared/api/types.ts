@@ -12,7 +12,7 @@ export type BackendRiskLevel = "safe" | "caution" | "danger" | "severe";
 // 데이터 신뢰도
 export type DataConfidence = "high" | "medium" | "low";
 
-// 예측 시점(백엔드 명칭)
+// 예측 시점(백엔드 명칭). public riskTimeline은 now/24h/72h.
 export type BackendHorizon = "now" | "6h" | "24h" | "72h";
 
 // GET /api/public/beaches
@@ -42,7 +42,18 @@ export type BeachDetailResponse = {
   updatedAt: string;
 };
 
-// GET /api/public/beaches/{beachId}/risk (현재 시점만 반환)
+// GET /api/public/beaches/{beachId}/risk — 시점별 예측 포인트
+export type PublicRiskPointResponse = {
+  horizon: BackendHorizon;
+  riskLevel: BackendRiskLevel;
+  riskScore: number;
+  factors: string[];
+  dataConfidence: DataConfidence;
+  generatedAt: string | null;
+};
+
+// GET /api/public/beaches/{beachId}/risk
+// 최상위 risk*/factors는 하위호환용 현재 시점. 타임라인은 riskTimeline(now→24h→72h).
 export type PublicBeachRiskResponse = {
   beachId: number;
   beachName: string;
@@ -53,6 +64,7 @@ export type PublicBeachRiskResponse = {
   guideText: string;
   dataConfidence: DataConfidence;
   generatedAt: string | null;
+  riskTimeline: PublicRiskPointResponse[];
 };
 
 // 알림

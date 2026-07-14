@@ -10,15 +10,19 @@ const TAB_ITEMS = [
   { value: "after72h", label: "72시간 후" },
 ];
 
-// 미래 시점 예측 데이터가 아직 없을 때 안내 문구
-const FUTURE_EMPTY_TEXT = "예측 데이터 준비 중입니다.";
+const MISSING_DATA_TEXT = "예측 데이터 준비 중입니다.";
 
-// 현재 시점 원인만 API로 제공(factors). 미래 시점 탭은 빈 상태 안내.
-export type RiskCauseSectionProps = {
-  causes: RiskCause[];
+const EMPTY_CAUSES_TEXT: Record<TimeFrame, string> = {
+  current: "현재 특이사항이 없습니다.",
+  after24h: "해당 시점 특이사항이 없습니다.",
+  after72h: "해당 시점 특이사항이 없습니다.",
 };
 
-export function RiskCauseSection({ causes }: RiskCauseSectionProps) {
+export type RiskCauseSectionProps = {
+  causesByFrame: Record<TimeFrame, RiskCause[]>;
+};
+
+export function RiskCauseSection({ causesByFrame }: RiskCauseSectionProps) {
   const [tab, setTab] = useState<TimeFrame>("current");
   // 접힌 원인 제목 집합. 빈 Set = 전부 펼침.
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
@@ -35,7 +39,8 @@ export function RiskCauseSection({ causes }: RiskCauseSectionProps) {
     });
   };
 
-  const isCurrent = tab === "current";
+  const causes = causesByFrame[tab];
+  const hasFrameData = tab in causesByFrame;
 
   return (
     // Figma: 제목행↔카드 8px, 원인 항목 간 16px, 칩↔설명 4px, 카드 패딩 24px
@@ -51,7 +56,11 @@ export function RiskCauseSection({ causes }: RiskCauseSectionProps) {
         />
       </div>
       <Card className="p-[var(--padding-7)]" variant="surface">
-        {isCurrent && causes.length > 0 ? (
+        {!hasFrameData ? (
+          <p className="py-(--padding-4) text-center text-body-xsmall-mobile text-text-tertiary">
+            {MISSING_DATA_TEXT}
+          </p>
+        ) : causes.length > 0 ? (
           <div className="flex flex-col gap-[var(--gap-5)]">
             {causes.map((cause) => (
               <div className="flex flex-col gap-[var(--gap-2)]" key={cause.title}>
@@ -71,7 +80,7 @@ export function RiskCauseSection({ causes }: RiskCauseSectionProps) {
           </div>
         ) : (
           <p className="py-(--padding-4) text-center text-body-xsmall-mobile text-text-tertiary">
-            {isCurrent ? "현재 특이사항이 없습니다." : FUTURE_EMPTY_TEXT}
+            {EMPTY_CAUSES_TEXT[tab]}
           </p>
         )}
       </Card>

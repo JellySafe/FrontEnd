@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { ApiError } from "@/shared/api/http-client";
+import type { RiskCause, TimeFrame } from "@/shared/risk/types";
 import { PUBLIC_APP_MAX_WIDTH_CLASS } from "@/shared/ui/public-layout";
 import { useBeachDetailQuery } from "../api/useBeachDetailQuery";
 import { useBeachesQuery } from "../api/useBeachesQuery";
@@ -47,6 +48,16 @@ export function BeachDetailScreen({ beachId }: BeachDetailScreenProps) {
     return pickAlternativeBeaches(beachesQuery.data, current);
   }, [beachesQuery.data, detail]);
 
+  const causesByFrame = useMemo(() => {
+    if (!risk) {
+      return {} as Record<TimeFrame, RiskCause[]>;
+    }
+
+    return Object.fromEntries(
+      risk.timeline.map((point) => [point.timeFrame, point.causes]),
+    ) as Record<TimeFrame, RiskCause[]>;
+  }, [risk]);
+
   if (detailQuery.isLoading || riskQuery.isLoading) {
     return <DetailMessage>해변 정보를 불러오는 중입니다</DetailMessage>;
   }
@@ -68,9 +79,9 @@ export function BeachDetailScreen({ beachId }: BeachDetailScreenProps) {
         <RiskGuideBanner guideText={risk.guideText} risk={risk.risk} />
         <section className="flex flex-col gap-[var(--gap-3)]">
           <h2 className="text-heading-xsmall-mobile text-text-primary">시간별 위험도 예측</h2>
-          <RiskPredictionChart confidence={risk.confidence} risk={risk.risk} riskScore={risk.riskScore} />
+          <RiskPredictionChart timeline={risk.timeline} />
         </section>
-        <RiskCauseSection causes={risk.causes} />
+        <RiskCauseSection causesByFrame={causesByFrame} />
         <EmergencyGuide />
         <AlternativeBeaches beaches={alternatives} />
       </div>
