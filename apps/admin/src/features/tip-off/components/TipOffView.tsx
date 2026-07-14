@@ -5,9 +5,13 @@ import { useCallback, useMemo, useState } from "react";
 import { clearAdminSession } from "@/features/admin-auth/model/admin-session";
 import { ApiError } from "@/shared/api/http-client";
 import { CloseIcon } from "@/shared/ui/icons";
-import { mapAdminStatus, toReviewRequest } from "../api/mappers";
-import { reviewReport } from "../api/reports-api";
-import { getTipOffDetail } from "../mocks/tip-off.mock";
+import {
+  mapAdminStatus,
+  toFallbackDetail,
+  toReviewRequest,
+  toTipOffDetail,
+} from "../api/mappers";
+import { getAdminReportDetail, reviewReport } from "../api/reports-api";
 import { useTipOffListState } from "../hooks/useTipOffListState";
 import {
   SORT_LABEL,
@@ -15,10 +19,13 @@ import {
   type ImagePreviewState,
   type RejectReason,
   type ReviewDecision,
+  type TipOffDetail,
   type TipOffScreen,
 } from "../types";
 import { TipOffDetailHeader } from "./TipOffDetailHeader";
+import { TipOffDetailLoadingSkeleton } from "./TipOffDetailLoadingSkeleton";
 import { TipOffDetailPanel } from "./TipOffDetailPanel";
+import { TipOffListLoadingSkeleton } from "./TipOffListLoadingSkeleton";
 import { TipOffFilters } from "./TipOffFilters";
 import { TipOffImagePreviewModal } from "./TipOffImagePreviewModal";
 import { TipOffTable } from "./TipOffTable";
@@ -32,29 +39,48 @@ export function TipOffView() {
   const [imagePreview, setImagePreview] = useState<ImagePreviewState>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [detail, setDetail] = useState<TipOffDetail | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const selectedRow = useMemo(
     () => listState.rows.find((row) => row.id === listState.selectedId) ?? null,
     [listState.rows, listState.selectedId],
   );
 
-  const detail = selectedRow ? getTipOffDetail(selectedRow) : null;
   const isReviewLocked = selectedRow ? !canReviewReport(selectedRow.reportStatus) : true;
 
-  const previewImages = useMemo(() => {
-    if (!imagePreview) return [];
-    const row = listState.rows.find(
-      (item) => item.id === imagePreview.tipOffId,
-    );
-    return row ? getTipOffDetail(row).images : [];
-  }, [imagePreview, listState.rows]);
+  const previewImages = detail?.images ?? [];
 
-  const handleSelectRow = (id: string) => {
+  const handleSelectRow = async (id: string) => {
+    const row = listState.rows.find((item) => item.id === id);
+    if (!row) return;
+
     listState.setSelectedId(id);
     setReviewDecision(null);
     setRejectReason(null);
     setReviewError(null);
+    setImagePreview(null);
+    setDetailError(null);
+    setDetail(null);
     setScreen("detail");
+    setIsDetailLoading(true);
+
+    try {
+      const response = await getAdminReportDetail(Number(id));
+      setDetail(toTipOffDetail(response, row));
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        clearAdminSession();
+        window.location.assign("/login");
+        return;
+      }
+      // 상세 실패 시 목록 데이터 기반 폴백으로 최소 정보를 유지한다.
+      setDetail(toFallbackDetail(row));
+      setDetailError("상세 정보를 불러오지 못했습니다. 일부 정보가 표시되지 않을 수 있습니다.");
+    } finally {
+      setIsDetailLoading(false);
+    }
   };
 
   const handleBackToList = useCallback(() => {
@@ -64,6 +90,9 @@ export function TipOffView() {
     setRejectReason(null);
     setReviewError(null);
     setImagePreview(null);
+    setDetail(null);
+    setDetailError(null);
+    setIsDetailLoading(false);
   }, [listState.setSelectedId]);
 
   const handleSubmitReview = async () => {
@@ -113,10 +142,37 @@ export function TipOffView() {
     listState.updateThumbnailState(id, "loaded", row.thumbnailSrc);
   };
 
-  if (screen === "detail" && detail) {
+  if (screen === "detail") {
+    if (!detail && isDetailLoading) {
+      return (
+        <div className="flex flex-col pt-(--gap-8)">
+          <TipOffDetailHeader onBack={handleBackToList} />
+          <TipOffDetailLoadingSkeleton />
+        </div>
+      );
+    }
+
+    if (!detail) {
+      return (
+        <div className="flex flex-col pt-(--gap-8)">
+          <TipOffDetailHeader onBack={handleBackToList} />
+          <div className="flex min-h-[200px] items-center justify-center">
+            <p className="text-body-xsmall-pc text-text-tertiary">
+              제보 상세를 불러오지 못했습니다
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col pt-(--gap-8)">
         <TipOffDetailHeader onBack={handleBackToList} />
+        {detailError ? (
+          <p className="pb-(--gap-3) text-caption-small-pc text-text-error">
+            {detailError}
+          </p>
+        ) : null}
         <TipOffDetailPanel
           detail={detail}
           isReviewLocked={isReviewLocked}
@@ -213,9 +269,7 @@ export function TipOffView() {
       </p>
 
       {listState.isLoading && listState.rows.length === 0 ? (
-        <div className="flex min-h-[200px] items-center justify-center">
-          <p className="text-body-xsmall-pc text-text-tertiary">제보 목록을 불러오는 중입니다</p>
-        </div>
+        <TipOffListLoadingSkeleton />
       ) : listState.isError ? (
         <div className="flex min-h-[200px] items-center justify-center">
           <p className="text-body-xsmall-pc text-text-tertiary">제보 목록을 불러오지 못했습니다</p>
@@ -223,7 +277,7 @@ export function TipOffView() {
       ) : (
         <TipOffTable
           onRetryThumbnail={handleRetryThumbnail}
-          onSelect={handleSelectRow}
+          onSelect={(id) => void handleSelectRow(id)}
           rows={listState.visibleRows}
           selectedId={listState.selectedId}
         />

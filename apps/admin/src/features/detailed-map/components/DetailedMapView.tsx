@@ -7,6 +7,7 @@ import { useDetailedMapData } from "../api/useDetailedMapData";
 import type { DetailedMapScreen } from "../types";
 import { DetailedMapDetail } from "./DetailedMapDetail";
 import { DetailedMapHeader } from "./DetailedMapHeader";
+import { DetailedMapLoadingSkeleton } from "./DetailedMapLoadingSkeleton";
 import { ResponseLog } from "./ResponseLog";
 
 export type DetailedMapViewProps = {
@@ -77,9 +78,7 @@ export function DetailedMapView({ beachId: beachIdParam }: DetailedMapViewProps)
           onBack={() => router.push("/dashboard")}
           title="해변 상세"
         />
-        <div className="flex items-center justify-center pt-(--padding-8)">
-          <p className="text-body-xsmall-pc text-text-tertiary">상세 정보를 불러오는 중입니다</p>
-        </div>
+        <DetailedMapLoadingSkeleton />
       </div>
     );
   }

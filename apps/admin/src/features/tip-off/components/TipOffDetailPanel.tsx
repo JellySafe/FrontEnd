@@ -33,11 +33,11 @@ function canSubmitReview(decision: ReviewDecision, reason: RejectReason): boolea
 }
 
 function getReviewLockMessage(status: BackendReportStatus): string {
+  if (status === "verified" || status === "rejected" || status === "reflected") {
+    return "완료 처리 된 제보입니다.";
+  }
   if (status === "received" || status === "ai_processing") {
     return "AI 처리가 끝난 뒤에 검수할 수 있습니다.";
-  }
-  if (status === "verified" || status === "rejected" || status === "reflected") {
-    return "이미 확정된 검수 결과입니다. 상태 변경은 불가합니다.";
   }
   return "현재 상태에서는 검수할 수 없습니다.";
 }
@@ -54,8 +54,8 @@ export function TipOffDetailPanel({
   submitError = null,
   isReviewLocked = false,
 }: TipOffDetailPanelProps) {
-  const isSubmitEnabled =
-    !isReviewLocked && canSubmitReview(reviewDecision, rejectReason) && !isSubmitting;
+  const isSubmitEnabled = canSubmitReview(reviewDecision, rejectReason) && !isSubmitting;
+  const isButtonDisabled = isReviewLocked || !isSubmitEnabled;
 
   return (
     <div className="flex flex-col gap-(--gap-8)">
@@ -83,12 +83,6 @@ export function TipOffDetailPanel({
         </p>
       </div>
 
-      {isReviewLocked ? (
-        <p className="text-caption-small-pc text-text-tertiary">
-          {getReviewLockMessage(detail.reportStatus)}
-        </p>
-      ) : null}
-
       <TipOffStatusControl
         disabled={isReviewLocked}
         onRejectReasonChange={onRejectReasonChange}
@@ -101,17 +95,21 @@ export function TipOffDetailPanel({
         <p className="text-caption-small-pc text-text-error">{submitError}</p>
       ) : null}
 
-      {isReviewLocked ? null : (
-        <Button
-          className="w-full"
-          disabled={!isSubmitEnabled}
-          onClick={onSubmit}
-          size="medium"
-          variant="primary"
-        >
-          {isSubmitting ? "저장 중..." : "검수 완료"}
-        </Button>
-      )}
+      {isReviewLocked ? (
+        <p className="text-caption-small-pc text-text-tertiary">
+          {getReviewLockMessage(detail.reportStatus)}
+        </p>
+      ) : null}
+
+      <Button
+        className="w-full"
+        disabled={isButtonDisabled}
+        onClick={onSubmit}
+        size="medium"
+        variant="primary"
+      >
+        {isSubmitting ? "저장 중..." : "검수 완료"}
+      </Button>
     </div>
   );
 }
