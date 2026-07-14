@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { ApiError } from "@/shared/api/http-client";
 import { signInAdmin } from "../api/signIn";
 
 const CREDENTIAL_ERROR = "이메일, 비밀번호가 틀렸습니다.";
+const SERVER_ERROR = "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
 
 export function useAdminLogin() {
   const router = useRouter();
@@ -35,8 +37,16 @@ export function useAdminLogin() {
     try {
       await signInAdmin({ email, password });
       router.replace("/dashboard");
-    } catch {
-      setError(CREDENTIAL_ERROR);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401 || err.code?.startsWith("AUTH_")) {
+          setError(CREDENTIAL_ERROR);
+        } else {
+          setError(SERVER_ERROR);
+        }
+      } else {
+        setError(SERVER_ERROR);
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -1,18 +1,67 @@
-import type { ApiEnvelope } from "./types";
+import type { ApiEnvelope, ApiErrorBody } from "./types";
 
 export class ApiError extends Error {
   readonly status: number;
   readonly path: string;
+  readonly code?: string;
 
-  constructor(message: string, status: number, path: string) {
+  constructor(message: string, status: number, path: string, code?: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.path = path;
+    this.code = code;
   }
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+function parseApiErrorBody(body: unknown): { message: string; code?: string } | null {
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    !("success" in body) ||
+    (body as ApiErrorBody).success !== false ||
+    !("error" in body)
+  ) {
+    return null;
+  }
+
+  const { error } = body as ApiErrorBody;
+  if (typeof error !== "object" || error === null) {
+    return null;
+  }
+
+  const { code, message } = error;
+  if (typeof code !== "string") {
+    return null;
+  }
+
+  const resolvedMessage = Array.isArray(message)
+    ? message.join(", ")
+    : typeof message === "string"
+      ? message
+      : null;
+
+  if (!resolvedMessage) {
+    return null;
+  }
+
+  return { message: resolvedMessage, code };
+}
+
+function throwApiError(
+  body: unknown,
+  status: number,
+  path: string,
+  fallbackMessage: string,
+): never {
+  const parsed = parseApiErrorBody(body);
+  if (parsed) {
+    throw new ApiError(parsed.message, status, path, parsed.code);
+  }
+  throw new ApiError(fallbackMessage, status, path);
+}
 
 // 브라우저는 same-origin 상대 경로로 rewrites 프록시를 탄다.
 function buildUrl(path: string): string {
@@ -34,13 +83,15 @@ export async function getJson<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { Accept: "application/json", ...init?.headers },
   });
 
+  const body: unknown = await response.json();
+
   if (!response.ok) {
-    throw new ApiError(`요청 실패 (${response.status})`, response.status, path);
+    throwApiError(body, response.status, path, `요청 실패 (${response.status})`);
   }
 
-  const envelope = (await response.json()) as ApiEnvelope<T>;
+  const envelope = body as ApiEnvelope<T>;
   if (!envelope.success) {
-    throw new ApiError("API가 실패 응답을 반환했습니다.", response.status, path);
+    throwApiError(body, response.status, path, "API가 실패 응답을 반환했습니다.");
   }
   return envelope.data;
 }
@@ -60,13 +111,15 @@ export async function postJson<T>(path: string, body: unknown, init?: RequestIni
     headers,
   });
 
+  const responseBody: unknown = await response.json();
+
   if (!response.ok) {
-    throw new ApiError(`요청 실패 (${response.status})`, response.status, path);
+    throwApiError(responseBody, response.status, path, `요청 실패 (${response.status})`);
   }
 
-  const envelope = (await response.json()) as ApiEnvelope<T>;
+  const envelope = responseBody as ApiEnvelope<T>;
   if (!envelope.success) {
-    throw new ApiError("API가 실패 응답을 반환했습니다.", response.status, path);
+    throwApiError(responseBody, response.status, path, "API가 실패 응답을 반환했습니다.");
   }
   return envelope.data;
 }

@@ -3,6 +3,11 @@ export type ApiEnvelope<T> = {
   data: T;
 };
 
+export type ApiErrorBody = {
+  success: false;
+  error: { code: string; message: string | string[] };
+};
+
 export type AdminRole = "public" | "operator" | "admin";
 
 export type LoginUserRequest = {
