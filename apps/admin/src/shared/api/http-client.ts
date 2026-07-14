@@ -1,3 +1,4 @@
+import { getAdminAccessToken } from "@/features/admin-auth/model/admin-session";
 import type { ApiEnvelope, ApiErrorBody } from "./types";
 
 export class ApiError extends Error {
@@ -63,6 +64,20 @@ function throwApiError(
   throw new ApiError(fallbackMessage, status, path);
 }
 
+function mergeAuthHeaders(initHeaders?: HeadersInit): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (initHeaders) {
+    new Headers(initHeaders).forEach((value, key) => {
+      headers[key] = value;
+    });
+  }
+  const token = getAdminAccessToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 // 브라우저는 same-origin 상대 경로로 rewrites 프록시를 탄다.
 function buildUrl(path: string): string {
   const suffix = path.startsWith("/") ? path : `/${path}`;
@@ -80,7 +95,7 @@ export async function getJson<T>(path: string, init?: RequestInit): Promise<T> {
   const url = buildUrl(path);
   const response = await fetch(url, {
     ...init,
-    headers: { Accept: "application/json", ...init?.headers },
+    headers: { Accept: "application/json", ...mergeAuthHeaders(init?.headers) },
   });
 
   const body: unknown = await response.json();
@@ -100,9 +115,10 @@ export async function postJson<T>(path: string, body: unknown, init?: RequestIni
   const url = buildUrl(path);
   const isFormData = body instanceof FormData;
 
+  const authHeaders = mergeAuthHeaders(init?.headers);
   const headers = isFormData
-    ? { Accept: "application/json", ...init?.headers }
-    : { Accept: "application/json", "Content-Type": "application/json", ...init?.headers };
+    ? { Accept: "application/json", ...authHeaders }
+    : { Accept: "application/json", "Content-Type": "application/json", ...authHeaders };
 
   const response = await fetch(url, {
     method: "POST",
