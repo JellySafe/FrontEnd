@@ -115,7 +115,9 @@ export function BottomSheet({
       ref={dialogRef}
       style={{ transform: dragY ? `translateY(${dragY}px)` : undefined }}
     >
-      <div className="flex max-h-[min(80dvh,100%)] flex-col gap-[var(--gap-5)] px-[var(--padding-3)] pb-[var(--padding-3)]">
+      {/* max-h는 80dvh 고정. min(...,100%)의 100%는 auto 높이 dialog 기준이라
+          일부 모바일(iOS Safari)에서 0에 가깝게 해석돼 시트가 붕괴했다. */}
+      <div className="flex max-h-[80dvh] flex-col gap-[var(--gap-5)] px-[var(--padding-3)] pb-[var(--padding-3)]">
         <div
           aria-label="시트 닫기 핸들"
           className="flex min-h-8 shrink-0 cursor-grab items-center justify-center touch-none pt-[var(--padding-3)] active:cursor-grabbing"

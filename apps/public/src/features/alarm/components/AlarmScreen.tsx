@@ -4,6 +4,7 @@ import { Badge, Tabs } from "@jellysafe/design-system";
 import { useEffect, useState } from "react";
 import { useAlertsQuery } from "@/features/alarm/api/useAlertsQuery";
 import { useMarkAlertReadMutation } from "@/features/alarm/api/useMarkAlertReadMutation";
+import { DEMO_ALERTS, isDemoAlert } from "@/features/alarm/mocks/alarm.mock";
 import { useLikes } from "@/shared/likes/LikesProvider";
 import { RISK_LABEL } from "@/shared/risk/types";
 import { dismissAlarmTooltip } from "@/shared/ui/alarm-tooltip-storage";
@@ -37,11 +38,13 @@ export function AlarmScreen() {
   // 알림 목록 조회 및 열람 처리
   const alertsQuery = useAlertsQuery();
   const markReadMutation = useMarkAlertReadMutation();
-  const notifications = alertsQuery.data?.items ?? [];
+  // 실제 admin 알림이 위, 시드 데모 알림이 아래 순서로 병합. 데모는 서버 미보유 항목이라 항상 노출한다.
+  const notifications = [...(alertsQuery.data?.items ?? []), ...DEMO_ALERTS];
 
   // 미열람 알림 항목 탭 시 열람 처리(성공 시 목록 무효화). 상세 이동은 없다.
+  // 데모 알림(음수 id)은 서버에 없으므로 열람 PATCH를 호출하지 않는다.
   const handleNotificationClick = (id: number, isRead: boolean) => {
-    if (isRead || markReadMutation.isPending) return;
+    if (isDemoAlert(id) || isRead || markReadMutation.isPending) return;
     markReadMutation.mutate(id);
   };
 
