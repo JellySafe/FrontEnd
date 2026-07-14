@@ -1,37 +1,53 @@
-import { EMERGENCY_GUIDE } from "../constants/emergency-guide";
+"use client";
 
-// 응급 대처법 카드 목록. 강조 segment는 색상 span으로 렌더.
+import { useFirstAidGuideQuery } from "../api/useFirstAidGuideQuery";
+
+// body의 빈 줄(\n\n) 기준으로 카드 블록을 나눈다. API는 plain text만 제공.
+function splitGuideBlocks(body: string): string[] {
+  return body
+    .split(/\n\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+}
+
+// 응급 대처법 — GET /api/public/guides 의 FIRST_AID
 export function EmergencyGuide() {
+  const { data: guide, isLoading, isError } = useFirstAidGuideQuery();
+
+  if (isLoading) {
+    return (
+      <section className="flex flex-col gap-[var(--gap-3)]">
+        <h2 className="text-heading-xsmall-mobile text-text-primary">해파리 접촉피해 응급 대처법</h2>
+        <p className="rounded-2xl bg-bg-surface px-[var(--padding-5)] py-[var(--padding-3)] text-body-xsmall-mobile text-text-tertiary">
+          응급 대처법을 불러오는 중
+        </p>
+      </section>
+    );
+  }
+
+  if (isError || !guide) {
+    return (
+      <section className="flex flex-col gap-[var(--gap-3)]">
+        <h2 className="text-heading-xsmall-mobile text-text-primary">해파리 접촉피해 응급 대처법</h2>
+        <p className="rounded-2xl bg-bg-surface px-[var(--padding-5)] py-[var(--padding-3)] text-body-xsmall-mobile text-text-tertiary">
+          응급 대처법을 불러오지 못했습니다
+        </p>
+      </section>
+    );
+  }
+
+  const blocks = splitGuideBlocks(guide.body);
+
   return (
-    // Figma: 제목↔카드·카드 간 모두 8px
     <section className="flex flex-col gap-[var(--gap-3)]">
-      <h2 className="text-heading-xsmall-mobile text-text-primary">해파리 접촉피해 응급 대처법</h2>
+      <h2 className="text-heading-xsmall-mobile text-text-primary">{guide.title}</h2>
       <div className="flex flex-col gap-[var(--gap-3)]">
-        {EMERGENCY_GUIDE.map((item, itemIndex) => (
+        {blocks.map((block, index) => (
           <p
-            className={[
-              "rounded-2xl bg-bg-surface px-[var(--padding-5)] py-[var(--padding-3)] text-body-xsmall-mobile",
-              item.tone === "primary" ? "text-text-primary" : "text-text-secondary",
-            ].join(" ")}
-            key={itemIndex}
+            className="whitespace-pre-line rounded-2xl bg-bg-surface px-[var(--padding-5)] py-[var(--padding-3)] text-body-xsmall-mobile text-text-primary"
+            key={index}
           >
-            {item.segments.map((segment, segmentIndex) =>
-              segment.emphasis ? (
-                <span
-                  className={[
-                    "text-body-small-mobile",
-                    segment.emphasis === "brand"
-                      ? "text-text-brand"
-                      : "text-[var(--color-critical-50)]",
-                  ].join(" ")}
-                  key={segmentIndex}
-                >
-                  {segment.text}
-                </span>
-              ) : (
-                segment.text
-              ),
-            )}
+            {block}
           </p>
         ))}
       </div>

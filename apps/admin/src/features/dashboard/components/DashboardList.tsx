@@ -111,7 +111,7 @@ export function DashboardList({
                           {beach.address}
                         </span>
                       </span>
-                      <span className="flex flex-wrap items-start gap-[4px] text-caption-medium-pc">
+                      <span className="flex flex-col gap-(--gap-2) text-caption-medium-pc">
                         <span className="text-text-secondary">
                           현재 위험도<span className="text-text-tertiary">(신뢰도)</span>: {beach.riskScore}
                           <span className="text-text-tertiary">({beach.confidence}%)</span>

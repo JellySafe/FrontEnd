@@ -8,7 +8,7 @@ import { NavigationBar } from "@/shared/ui/NavigationBar";
 import { PublicPageShell } from "@/shared/ui/PublicPageShell";
 import { PUBLIC_NAV_ITEMS } from "@/shared/ui/navigation-items";
 import { REPORT_TYPE_LABEL } from "../types";
-import type { ReportLocation, ReportType, SubmittedReport } from "../types";
+import type { ReportLocation, ReportSubmitPayload, ReportType } from "../types";
 import { formatReportDateTime } from "../utils/format-date-time";
 import { CurrentLocationScreen } from "@/features/location/components/CurrentLocationScreen";
 import { AddressSearchSheet } from "./AddressSearchSheet";
@@ -18,7 +18,7 @@ import { CheckCircleIcon, CircleBlankIcon, UpDownIcon } from "./icons";
 const MAX_IMAGE_COUNT = 3;
 const REPORT_TYPES: ReportType[] = ["sighting", "swarm", "sting"];
 
-type ReportImage = { id: string; previewUrl: string };
+type ReportImage = { id: string; previewUrl: string; file: File };
 
 // 값 유무에 따라 placeholder/값 표시를 전환하는 선택 필드
 function SelectField({
@@ -84,7 +84,7 @@ function ConsentRow({
 }
 
 export type ReportFormProps = {
-  onSubmit: (report: SubmittedReport) => void;
+  onSubmit: (payload: ReportSubmitPayload) => void;
 };
 
 // 해파리 제보 폼: 이미지/위치/일시/유형/동의 입력 후 제출
@@ -119,6 +119,7 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
         ...files.slice(0, MAX_IMAGE_COUNT - prev.length).map((file) => ({
           id: crypto.randomUUID(),
           previewUrl: URL.createObjectURL(file),
+          file,
         })),
       ]);
     }
@@ -142,8 +143,14 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
     hasReviewConsent;
 
   const handleSubmit = () => {
-    if (!location || !discoveredAt || !reportType) return;
-    onSubmit({ locationName: location.name, discoveredAt, reportType });
+    if (!location || !discoveredAt || !reportType || images.length === 0) return;
+    onSubmit({
+      locationName: location.name,
+      discoveredAt,
+      reportType,
+      imageFile: images[0].file,
+      location,
+    });
   };
 
   return (

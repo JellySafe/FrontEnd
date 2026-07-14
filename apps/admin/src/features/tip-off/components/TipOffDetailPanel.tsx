@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@jellysafe/design-system";
+import type { BackendReportStatus } from "@/shared/api/types";
 import {
   AI_VERDICT_LABEL,
   REPORT_TYPE_LABEL,
@@ -20,12 +21,25 @@ export type TipOffDetailPanelProps = {
   onRejectReasonChange: (reason: RejectReason) => void;
   onImageClick: (index: number) => void;
   onSubmit: () => void;
+  isSubmitting?: boolean;
+  submitError?: string | null;
+  isReviewLocked?: boolean;
 };
 
 function canSubmitReview(decision: ReviewDecision, reason: RejectReason): boolean {
   if (!decision) return false;
   if (decision === "rejected") return reason !== null;
   return true;
+}
+
+function getReviewLockMessage(status: BackendReportStatus): string {
+  if (status === "verified" || status === "rejected" || status === "reflected") {
+    return "완료 처리 된 제보입니다.";
+  }
+  if (status === "received" || status === "ai_processing") {
+    return "AI 처리가 끝난 뒤에 검수할 수 있습니다.";
+  }
+  return "현재 상태에서는 검수할 수 없습니다.";
 }
 
 export function TipOffDetailPanel({
@@ -36,8 +50,12 @@ export function TipOffDetailPanel({
   onRejectReasonChange,
   onImageClick,
   onSubmit,
+  isSubmitting = false,
+  submitError = null,
+  isReviewLocked = false,
 }: TipOffDetailPanelProps) {
-  const isSubmitEnabled = canSubmitReview(reviewDecision, rejectReason);
+  const isSubmitEnabled = canSubmitReview(reviewDecision, rejectReason) && !isSubmitting;
+  const isButtonDisabled = isReviewLocked || !isSubmitEnabled;
 
   return (
     <div className="flex flex-col gap-(--gap-8)">
@@ -66,20 +84,31 @@ export function TipOffDetailPanel({
       </div>
 
       <TipOffStatusControl
+        disabled={isReviewLocked}
         onRejectReasonChange={onRejectReasonChange}
         onReviewDecisionChange={onReviewDecisionChange}
         rejectReason={rejectReason}
         reviewDecision={reviewDecision}
       />
 
+      {submitError ? (
+        <p className="text-caption-small-pc text-text-error">{submitError}</p>
+      ) : null}
+
+      {isReviewLocked ? (
+        <p className="text-caption-small-pc text-text-tertiary">
+          {getReviewLockMessage(detail.reportStatus)}
+        </p>
+      ) : null}
+
       <Button
         className="w-full"
-        disabled={!isSubmitEnabled}
+        disabled={isButtonDisabled}
         onClick={onSubmit}
         size="medium"
         variant="primary"
       >
-        검수 완료
+        {isSubmitting ? "저장 중..." : "검수 완료"}
       </Button>
     </div>
   );

@@ -1,13 +1,50 @@
-// 프론트 임시 세션. 백엔드 인증 명세 확정 시 쿠키/토큰 방식으로 교체한다.
+import type { AdminRole } from "@/shared/api/types";
+
 const SESSION_KEY = "jellysafe-admin-session";
+
+export type AdminSession = {
+  accessToken: string;
+  userId: number;
+  email: string;
+  role: AdminRole;
+  name: string;
+};
+
+function parseSession(raw: string | null): AdminSession | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as AdminSession;
+    if (
+      typeof parsed.accessToken === "string" &&
+      typeof parsed.userId === "number" &&
+      typeof parsed.email === "string" &&
+      typeof parsed.role === "string" &&
+      typeof parsed.name === "string"
+    ) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export function isAdminAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
-  return sessionStorage.getItem(SESSION_KEY) === "1";
+  return parseSession(sessionStorage.getItem(SESSION_KEY)) !== null;
 }
 
-export function setAdminAuthenticated(): void {
-  sessionStorage.setItem(SESSION_KEY, "1");
+export function getAdminSession(): AdminSession | null {
+  if (typeof window === "undefined") return null;
+  return parseSession(sessionStorage.getItem(SESSION_KEY));
+}
+
+export function getAdminAccessToken(): string | null {
+  return getAdminSession()?.accessToken ?? null;
+}
+
+export function setAdminSession(session: AdminSession): void {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
 export function clearAdminSession(): void {

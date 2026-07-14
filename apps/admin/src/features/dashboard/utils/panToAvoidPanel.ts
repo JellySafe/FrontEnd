@@ -40,5 +40,7 @@ export function panToAvoidPanel(map: kakao.maps.Map, point: MapPoint): void {
     centerPixel.y + (pixel.y - targetPixelY),
   );
   const nextCenter = projection.coordsFromContainerPoint(nextCenterPixel);
-  map.panTo(nextCenter);
+  // panTo는 중간 거리에서도 타일이 밀리며 유격이 보인다.
+  // 패널 오픈 시엔 즉시 이동(setCenter)이 덜 거슬린다. 원거리 드래그 유격은 SDK 한계.
+  map.setCenter(nextCenter);
 }

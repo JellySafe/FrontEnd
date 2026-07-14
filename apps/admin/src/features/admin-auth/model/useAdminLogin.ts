@@ -3,19 +3,21 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { ApiError } from "@/shared/api/http-client";
 import { signInAdmin } from "../api/signIn";
 
-const CREDENTIAL_ERROR = "아이디, 비밀번호가 틀렸습니다.";
+const CREDENTIAL_ERROR = "이메일, 비밀번호가 틀렸습니다.";
+const SERVER_ERROR = "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
 
 export function useAdminLogin() {
   const router = useRouter();
-  const [username, setUsernameValue] = useState("");
+  const [email, setEmailValue] = useState("");
   const [password, setPasswordValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const setUsername = (value: string) => {
-    setUsernameValue(value);
+  const setEmail = (value: string) => {
+    setEmailValue(value);
     if (error) setError(null);
   };
   const setPassword = (value: string) => {
@@ -26,28 +28,34 @@ export function useAdminLogin() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    // 클라이언트 최소 검증: 빈 값 확인
-    if (!username.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       setError(CREDENTIAL_ERROR);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // 인증 연동 지점: 백엔드 명세 확정 시 실제 로그인/세션을 연결한다.
-      await signInAdmin({ username, password });
+      await signInAdmin({ email, password });
       router.replace("/dashboard");
-    } catch {
-      setError(CREDENTIAL_ERROR);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401 || err.code?.startsWith("AUTH_")) {
+          setError(CREDENTIAL_ERROR);
+        } else {
+          setError(SERVER_ERROR);
+        }
+      } else {
+        setError(SERVER_ERROR);
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return {
-    username,
+    email,
     password,
-    setUsername,
+    setEmail,
     setPassword,
     error,
     isSubmitting,

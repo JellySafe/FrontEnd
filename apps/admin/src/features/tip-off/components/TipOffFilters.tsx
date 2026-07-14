@@ -20,13 +20,14 @@ const REPORT_TYPE_OPTIONS: TipOffReportType[] = [
   "sighting",
 ];
 
-const ADMIN_STATUS_FILTER_OPTIONS: Array<{ value: AdminStatus; label: string }> =
-  [
-    { value: "unreviewed", label: "미확인" },
-    { value: "rejected", label: "판별 불가" },
-    { value: "pending", label: "관리자 보류" },
-    { value: "duplicate-report", label: "중복 제보" },
-  ];
+const AI_VERDICT_OPTIONS: AiVerdict[] = ["normal", "toxic_suspected", "unknown"];
+
+const ADMIN_STATUS_FILTER_OPTIONS: Array<{ value: AdminStatus; label: string }> = [
+  { value: "unreviewed", label: "미확인" },
+  { value: "pending", label: "관리자 보류" },
+  { value: "rejected", label: "반려" },
+  { value: "approved", label: "확인완료" },
+];
 
 export type TipOffFiltersProps = {
   isOpen: boolean;
@@ -127,32 +128,15 @@ export function TipOffFilters({
 
             <FilterGroup label="AI 판별 결과">
               <ChipRow>
-                <Chip
-                  onSelectedChange={() => onToggleAiVerdict("not-jellyfish")}
-                  selected={draft.aiVerdicts.includes("not-jellyfish")}
-                >
-                  {AI_VERDICT_LABEL["not-jellyfish"]}
-                </Chip>
-                <Chip
-                  onSelectedChange={() => onToggleAiVerdict("duplicate")}
-                  selected={draft.aiVerdicts.includes("duplicate")}
-                >
-                  {AI_VERDICT_LABEL.duplicate}
-                </Chip>
-                <Chip
-                  onSelectedChange={() => onToggleAiVerdict("unclear-photo")}
-                  selected={draft.aiVerdicts.includes("unclear-photo")}
-                >
-                  {AI_VERDICT_LABEL["unclear-photo"]}
-                </Chip>
-              </ChipRow>
-              <ChipRow>
-                <Chip
-                  onSelectedChange={() => onToggleAiVerdict("location-error")}
-                  selected={draft.aiVerdicts.includes("location-error")}
-                >
-                  {AI_VERDICT_LABEL["location-error"]}
-                </Chip>
+                {AI_VERDICT_OPTIONS.map((aiVerdict) => (
+                  <Chip
+                    key={aiVerdict}
+                    onSelectedChange={() => onToggleAiVerdict(aiVerdict)}
+                    selected={draft.aiVerdicts.includes(aiVerdict)}
+                  >
+                    {AI_VERDICT_LABEL[aiVerdict]}
+                  </Chip>
+                ))}
               </ChipRow>
             </FilterGroup>
 

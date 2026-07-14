@@ -2,27 +2,33 @@
 
 import { Dropdown } from "@jellysafe/design-system";
 import { useCallback, useMemo, useState } from "react";
+import { clearAdminSession } from "@/features/admin-auth/model/admin-session";
+import { ApiError } from "@/shared/api/http-client";
 import { CloseIcon } from "@/shared/ui/icons";
 import {
-  getTipOffDetail,
-  reviewDecisionToAdminStatus,
-  TIP_OFF_TOTAL_COUNT,
-} from "../mocks/tip-off.mock";
+  mapAdminStatus,
+  toFallbackDetail,
+  toReviewRequest,
+  toTipOffDetail,
+} from "../api/mappers";
+import { getAdminReportDetail, reviewReport } from "../api/reports-api";
 import { useTipOffListState } from "../hooks/useTipOffListState";
 import {
   SORT_LABEL,
+  canReviewReport,
   type ImagePreviewState,
   type RejectReason,
   type ReviewDecision,
+  type TipOffDetail,
   type TipOffScreen,
 } from "../types";
 import { TipOffDetailHeader } from "./TipOffDetailHeader";
+import { TipOffDetailLoadingSkeleton } from "./TipOffDetailLoadingSkeleton";
 import { TipOffDetailPanel } from "./TipOffDetailPanel";
+import { TipOffListLoadingSkeleton } from "./TipOffListLoadingSkeleton";
 import { TipOffFilters } from "./TipOffFilters";
 import { TipOffImagePreviewModal } from "./TipOffImagePreviewModal";
 import { TipOffTable } from "./TipOffTable";
-
-const PHOTO = "/assets/tip-off/thumbnail-placeholder.png";
 
 // 단일 라우트에서 목록·상세 뷰를 union 상태로 전환한다.
 export function TipOffView() {
@@ -31,27 +37,50 @@ export function TipOffView() {
   const [reviewDecision, setReviewDecision] = useState<ReviewDecision>(null);
   const [rejectReason, setRejectReason] = useState<RejectReason>(null);
   const [imagePreview, setImagePreview] = useState<ImagePreviewState>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [detail, setDetail] = useState<TipOffDetail | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const selectedRow = useMemo(
     () => listState.rows.find((row) => row.id === listState.selectedId) ?? null,
     [listState.rows, listState.selectedId],
   );
 
-  const detail = selectedRow ? getTipOffDetail(selectedRow) : null;
+  const isReviewLocked = selectedRow ? !canReviewReport(selectedRow.reportStatus) : true;
 
-  const previewImages = useMemo(() => {
-    if (!imagePreview) return [];
-    const row = listState.rows.find(
-      (item) => item.id === imagePreview.tipOffId,
-    );
-    return row ? getTipOffDetail(row).images : [];
-  }, [imagePreview, listState.rows]);
+  const previewImages = detail?.images ?? [];
 
-  const handleSelectRow = (id: string) => {
+  const handleSelectRow = async (id: string) => {
+    const row = listState.rows.find((item) => item.id === id);
+    if (!row) return;
+
     listState.setSelectedId(id);
     setReviewDecision(null);
     setRejectReason(null);
+    setReviewError(null);
+    setImagePreview(null);
+    setDetailError(null);
+    setDetail(null);
     setScreen("detail");
+    setIsDetailLoading(true);
+
+    try {
+      const response = await getAdminReportDetail(Number(id));
+      setDetail(toTipOffDetail(response, row));
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        clearAdminSession();
+        window.location.assign("/login");
+        return;
+      }
+      // 상세 실패 시 목록 데이터 기반 폴백으로 최소 정보를 유지한다.
+      setDetail(toFallbackDetail(row));
+      setDetailError("상세 정보를 불러오지 못했습니다. 일부 정보가 표시되지 않을 수 있습니다.");
+    } finally {
+      setIsDetailLoading(false);
+    }
   };
 
   const handleBackToList = useCallback(() => {
@@ -59,33 +88,101 @@ export function TipOffView() {
     listState.setSelectedId(null);
     setReviewDecision(null);
     setRejectReason(null);
+    setReviewError(null);
     setImagePreview(null);
+    setDetail(null);
+    setDetailError(null);
+    setIsDetailLoading(false);
   }, [listState.setSelectedId]);
 
-  const handleSubmitReview = () => {
-    if (!selectedRow || !reviewDecision) return;
-    const adminStatus = reviewDecisionToAdminStatus(reviewDecision);
-    listState.updateRowStatus(selectedRow.id, adminStatus);
-    handleBackToList();
+  const handleSubmitReview = async () => {
+    if (!selectedRow || !reviewDecision || isSubmitting || isReviewLocked) return;
+
+    setIsSubmitting(true);
+    setReviewError(null);
+
+    try {
+      const response = await reviewReport(
+        Number(selectedRow.id),
+        toReviewRequest(reviewDecision, rejectReason),
+      );
+      listState.updateRowStatus(
+        selectedRow.id,
+        mapAdminStatus(response.reportStatus),
+        response.reportStatus,
+      );
+      handleBackToList();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 401) {
+          clearAdminSession();
+          window.location.assign("/login");
+          return;
+        }
+        if (error.code === "REPORT_INVALID_TRANSITION") {
+          setReviewError("이 상태 변경은 허용되지 않습니다.");
+          return;
+        }
+        const detail = error.code
+          ? `[${error.code}] ${error.message}`
+          : error.message;
+        setReviewError(`검수 저장에 실패했습니다. ${detail}`);
+      } else {
+        setReviewError("검수 저장에 실패했습니다. 다시 시도해주세요.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // 로드 실패 썸네일 재시도 시 즉시 이미지를 로드한다.
+  // 로드 실패 썸네일 재시도 시 원본 URL로 다시 로드한다.
   const handleRetryThumbnail = (id: string) => {
-    listState.updateThumbnailState(id, "loaded", PHOTO);
+    const row = listState.rows.find((item) => item.id === id);
+    if (!row?.thumbnailSrc) return;
+    listState.updateThumbnailState(id, "loaded", row.thumbnailSrc);
   };
 
-  if (screen === "detail" && detail) {
+  if (screen === "detail") {
+    if (!detail && isDetailLoading) {
+      return (
+        <div className="flex flex-col pt-(--gap-8)">
+          <TipOffDetailHeader onBack={handleBackToList} />
+          <TipOffDetailLoadingSkeleton />
+        </div>
+      );
+    }
+
+    if (!detail) {
+      return (
+        <div className="flex flex-col pt-(--gap-8)">
+          <TipOffDetailHeader onBack={handleBackToList} />
+          <div className="flex min-h-[200px] items-center justify-center">
+            <p className="text-body-xsmall-pc text-text-tertiary">
+              제보 상세를 불러오지 못했습니다
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col pt-(--gap-8)">
         <TipOffDetailHeader onBack={handleBackToList} />
+        {detailError ? (
+          <p className="pb-(--gap-3) text-caption-small-pc text-text-error">
+            {detailError}
+          </p>
+        ) : null}
         <TipOffDetailPanel
           detail={detail}
+          isReviewLocked={isReviewLocked}
           onImageClick={(index) =>
             setImagePreview({ tipOffId: detail.id, index })
           }
           onRejectReasonChange={setRejectReason}
           onReviewDecisionChange={(decision) => {
             setReviewDecision(decision);
+            setReviewError(null);
             if (decision !== "rejected") {
               setRejectReason(null);
             }
@@ -93,6 +190,8 @@ export function TipOffView() {
           onSubmit={handleSubmitReview}
           rejectReason={rejectReason}
           reviewDecision={reviewDecision}
+          isSubmitting={isSubmitting}
+          submitError={reviewError}
         />
         {imagePreview && imagePreview.tipOffId === detail.id ? (
           <TipOffImagePreviewModal
@@ -166,15 +265,23 @@ export function TipOffView() {
       </div>
 
       <p className="w-full text-right text-caption-small-pc text-text-tertiary">
-        전체: {TIP_OFF_TOTAL_COUNT}
+        전체: {listState.totalCount}
       </p>
 
-      <TipOffTable
-        onRetryThumbnail={handleRetryThumbnail}
-        onSelect={handleSelectRow}
-        rows={listState.visibleRows}
-        selectedId={listState.selectedId}
-      />
+      {listState.isLoading && listState.rows.length === 0 ? (
+        <TipOffListLoadingSkeleton />
+      ) : listState.isError ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <p className="text-body-xsmall-pc text-text-tertiary">제보 목록을 불러오지 못했습니다</p>
+        </div>
+      ) : (
+        <TipOffTable
+          onRetryThumbnail={handleRetryThumbnail}
+          onSelect={(id) => void handleSelectRow(id)}
+          rows={listState.visibleRows}
+          selectedId={listState.selectedId}
+        />
+      )}
     </div>
   );
 }

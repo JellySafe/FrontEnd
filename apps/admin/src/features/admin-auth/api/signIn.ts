@@ -1,22 +1,26 @@
-import { setAdminAuthenticated } from "../model/admin-session";
+import { postJson } from "@/shared/api/http-client";
+import type { LoginUserResponse } from "@/shared/api/types";
+import { setAdminSession } from "../model/admin-session";
 
 export type AdminCredentials = {
-  username: string;
+  email: string;
   password: string;
 };
 
-// 프론트 임시 계정. 백엔드 인증 연동 시 이 함수를 실제 API 호출로 교체한다.
-const MOCK_USERNAME = "test";
-const MOCK_PASSWORD = "test1234";
-
 export async function signInAdmin(credentials: AdminCredentials): Promise<void> {
-  const username = credentials.username.trim();
+  const email = credentials.email.trim();
   const password = credentials.password;
 
-  if (username === MOCK_USERNAME && password === MOCK_PASSWORD) {
-    setAdminAuthenticated();
-    return;
-  }
+  const response = await postJson<LoginUserResponse>("/api/admin/auth/login", {
+    email,
+    password,
+  });
 
-  throw new Error("INVALID_CREDENTIALS");
+  setAdminSession({
+    accessToken: response.accessToken,
+    userId: response.userId,
+    email: response.email,
+    role: response.role,
+    name: response.name,
+  });
 }

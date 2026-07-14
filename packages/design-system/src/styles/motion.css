@@ -8,14 +8,17 @@
   }
 }
 
-/* 대시보드 상세 패널: 아래에서 올라오는 등장 */
+/*
+ * 대시보드 상세 패널: 패널 슬롯 하단에서 위로 슬라이드.
+ * opacity 페이드는 쓰지 않는다(항상 불투명).
+ * 클립은 패널 프레임(overflow-hidden)에서만 — 지도 래퍼 overflow는
+ * panTo와 겹치면 왼쪽이 깜빡이며 잘려 보인다.
+ */
 @keyframes jellysafe-panel-slide-up {
   from {
-    opacity: 0;
     transform: translateY(100%);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }

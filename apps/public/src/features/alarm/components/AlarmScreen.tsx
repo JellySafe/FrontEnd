@@ -2,9 +2,10 @@
 
 import { Badge, Tabs } from "@jellysafe/design-system";
 import { useEffect, useState } from "react";
-import { ALARM_NOTIFICATIONS } from "@/features/alarm/mocks/alarm.mock";
+import { useAlertsQuery } from "@/features/alarm/api/useAlertsQuery";
+import { useMarkAlertReadMutation } from "@/features/alarm/api/useMarkAlertReadMutation";
+import { DEMO_ALERTS, isDemoAlert } from "@/features/alarm/mocks/alarm.mock";
 import { useLikes } from "@/shared/likes/LikesProvider";
-import { BEACHES, getBeachById } from "@/shared/mocks/beaches.mock";
 import { RISK_LABEL } from "@/shared/risk/types";
 import { dismissAlarmTooltip } from "@/shared/ui/alarm-tooltip-storage";
 import { NavigationBar } from "@/shared/ui/NavigationBar";
@@ -20,23 +21,37 @@ const ALARM_TABS = [
 
 type AlarmTab = "alarm" | "likes";
 
+// 해변 사진은 API가 제공하지 않아 목록 화면과 동일한 placeholder 사용
+const PLACEHOLDER_IMAGE = "/assets/beaches/placeholder.png";
+
 // 알림 화면 상호작용 전담. 탭 상태를 보유하고 알림 목록/관심 해변을 렌더.
 export function AlarmScreen() {
-  const { isLiked, likedIds, toggleLike } = useLikes();
+  const {
+    favorites,
+    isError: isFavoritesError,
+    isLiked,
+    isLoading: isFavoritesLoading,
+    toggleLike,
+  } = useLikes();
   const [tab, setTab] = useState<AlarmTab>("alarm");
+
+  // 알림 목록 조회 및 열람 처리
+  const alertsQuery = useAlertsQuery();
+  const markReadMutation = useMarkAlertReadMutation();
+  // 실제 admin 알림이 위, 시드 데모 알림이 아래 순서로 병합. 데모는 서버 미보유 항목이라 항상 노출한다.
+  const notifications = [...(alertsQuery.data?.items ?? []), ...DEMO_ALERTS];
+
+  // 미열람 알림 항목 탭 시 열람 처리(성공 시 목록 무효화). 상세 이동은 없다.
+  // 데모 알림(음수 id)은 서버에 없으므로 열람 PATCH를 호출하지 않는다.
+  const handleNotificationClick = (id: number, isRead: boolean) => {
+    if (isDemoAlert(id) || isRead || markReadMutation.isPending) return;
+    markReadMutation.mutate(id);
+  };
 
   // 알림 탭 최초 진입 시 홈 툴팁을 영구 숨김
   useEffect(() => {
     dismissAlarmTooltip();
   }, []);
-
-  // 조회 실패 항목은 렌더에서 제외
-  const notifications = ALARM_NOTIFICATIONS.map((notification) => ({
-    notification,
-    beach: getBeachById(notification.beachId),
-  })).filter((entry) => entry.beach != null);
-
-  const likedBeaches = BEACHES.filter((beach) => likedIds.has(beach.id));
 
   return (
     <PublicPageShell
@@ -57,44 +72,84 @@ export function AlarmScreen() {
 
       <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         {tab === "alarm" ? (
-          // 알림 리스트: 항목 사이 1px 구분선
-          <ul className="divide-y divide-border-default">
-            {notifications.map(({ beach, notification }) => (
-              <li
-                className="flex flex-col gap-(--gap-2) py-(--padding-5)"
-                key={notification.id}
-              >
-                <p className="text-caption-small-mobile text-text-tertiary">
-                  {notification.notifiedAt}
-                </p>
-                <div className="flex flex-col gap-(--gap-2)">
-                  <div className="flex items-center gap-(--gap-2)">
-                    <Badge platform="mobile" status={notification.risk}>
-                      {RISK_LABEL[notification.risk]}
-                    </Badge>
-                    <span className="min-w-0 flex-1 truncate text-body-xsmall-mobile text-text-secondary">
-                      {beach?.name}
-                    </span>
-                  </div>
-                  <p className="text-body-large-mobile text-text-primary">
-                    {notification.title}
-                  </p>
-                </div>
-                <p className="whitespace-pre-line text-caption-small-mobile text-text-secondary">
-                  {notification.description}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : likedBeaches.length > 0 ? (
+          !alertsQuery.isFetched && !alertsQuery.isError ? (
+            <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
+              알림을 불러오는 중입니다
+            </p>
+          ) : alertsQuery.isError ? (
+            <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
+              알림을 불러오지 못했습니다
+            </p>
+          ) : notifications.length > 0 ? (
+            // 알림 리스트: 항목 사이 1px 구분선
+            <ul className="divide-y divide-border-default">
+              {notifications.map((notification) => (
+                <li key={notification.id}>
+                  {/* 탭 시 열람 처리. 상세 이동이 없어 button으로 열람만 수행 */}
+                  <button
+                    className="flex w-full flex-col gap-(--gap-2) py-(--padding-5) text-left"
+                    onClick={() =>
+                      handleNotificationClick(notification.id, notification.isRead)
+                    }
+                    type="button"
+                  >
+                    <div className="flex items-center gap-(--gap-2)">
+                      {/* 미열람 강조: 좌측 작은 점(디자인 시스템 미정의라 조용한 표시만) */}
+                      {!notification.isRead ? (
+                        <span
+                          aria-label="읽지 않은 알림"
+                          className="size-(--gap-2) shrink-0 rounded-full bg-text-primary"
+                        />
+                      ) : null}
+                      <p className="text-caption-small-mobile text-text-tertiary">
+                        {notification.notifiedAt}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-(--gap-2)">
+                      <div className="flex items-center gap-(--gap-2)">
+                        {/* riskLevel이 null이면 Badge 생략 */}
+                        {notification.risk ? (
+                          <Badge platform="mobile" status={notification.risk}>
+                            {RISK_LABEL[notification.risk]}
+                          </Badge>
+                        ) : null}
+                        <span className="min-w-0 flex-1 truncate text-body-xsmall-mobile text-text-secondary">
+                          {notification.beachName}
+                        </span>
+                      </div>
+                      <p className="text-body-large-mobile text-text-primary">
+                        {notification.title}
+                      </p>
+                    </div>
+                    <p className="whitespace-pre-line text-caption-small-mobile text-text-secondary">
+                      {notification.message}
+                    </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
+              받은 알림이 없습니다
+            </p>
+          )
+        ) : isFavoritesLoading ? (
+          <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
+            관심 해변을 불러오는 중입니다
+          </p>
+        ) : isFavoritesError ? (
+          <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
+            관심 해변을 불러오지 못했습니다
+          </p>
+        ) : favorites.length > 0 ? (
           <div className="grid grid-cols-2 gap-(--gap-3)">
-            {likedBeaches.map((beach) => (
+            {favorites.map((beach) => (
               <PlaceCard
-                address={beach.address}
+                address={beach.region}
                 className="w-full"
                 href={`/beaches/${beach.id}`}
                 imageAlt={`${beach.name} 사진`}
-                imageSrc={beach.imageSrc}
+                imageSrc={PLACEHOLDER_IMAGE}
                 isLiked={isLiked(beach.id)}
                 key={beach.id}
                 likeLabel={`${beach.name} 관심 등록`}

@@ -1,4 +1,5 @@
 import type { MapPoint } from "@/features/dashboard/types";
+import type { BackendReportStatus } from "@/shared/api/types";
 import type { RiskLevel } from "@/shared/risk/types";
 
 export type TipOffScreen = "list" | "detail";
@@ -13,7 +14,7 @@ export type RejectReason =
 export type ThumbnailState = "loaded" | "loading" | "error" | "empty";
 
 export type TipOffReportType = "mass-sighting" | "sting-incident" | "sighting";
-export type AiVerdict = "not-jellyfish" | "duplicate" | "unclear-photo" | "location-error";
+export type AiVerdict = "normal" | "toxic_suspected" | "unknown";
 export type AdminStatus =
   | "unreviewed"
   | "approved"
@@ -48,6 +49,7 @@ export type TipOffListItem = {
   aiVerdict: AiVerdict;
   confidence: number;
   adminStatus: AdminStatus;
+  reportStatus: BackendReportStatus;
   thumbnailState: ThumbnailState;
   thumbnailSrc?: string;
 };
@@ -55,7 +57,7 @@ export type TipOffListItem = {
 export type TipOffDetail = TipOffListItem & {
   description: string;
   images: string[];
-  location: MapPoint;
+  location: MapPoint | null;
   locationLabel: string;
 };
 
@@ -71,10 +73,9 @@ export const REPORT_TYPE_LABEL: Record<TipOffReportType, string> = {
 };
 
 export const AI_VERDICT_LABEL: Record<AiVerdict, string> = {
-  "not-jellyfish": "해파리 아님",
-  duplicate: "중복",
-  "unclear-photo": "사진 불명확",
-  "location-error": "위치 오류",
+  normal: "일반",
+  toxic_suspected: "독성 의심",
+  unknown: "판별 불가",
 };
 
 export const ADMIN_STATUS_LABEL: Record<AdminStatus, string> = {
@@ -84,6 +85,16 @@ export const ADMIN_STATUS_LABEL: Record<AdminStatus, string> = {
   rejected: "반려",
   "duplicate-report": "중복 제보",
   "admin-pending": "관리자 확인중",
+};
+
+export const REPORT_STATUS_LABEL: Record<BackendReportStatus, string> = {
+  received: "접수",
+  ai_processing: "AI 처리중",
+  ai_done: "미검수",
+  hold: "관리자 보류",
+  verified: "확인완료",
+  rejected: "반려",
+  reflected: "반영완료",
 };
 
 export const REJECT_REASON_LABEL: Record<Exclude<RejectReason, null>, string> = {
@@ -105,6 +116,10 @@ export const REVIEW_DECISION_LABEL: Record<Exclude<ReviewDecision, null>, string
   pending: "보류",
   rejected: "반려",
 };
+
+export function canReviewReport(status: BackendReportStatus): boolean {
+  return status === "ai_done" || status === "hold";
+}
 
 export function countActiveTipOffFilters(filter: TipOffFilterState): number {
   return (

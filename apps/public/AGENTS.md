@@ -41,7 +41,8 @@
 ## Authentication
 
 - 로그인 페이지를 만들지 않는다.
-- 회원가입, 세션, 토큰, 역할, 인증 Guard를 추가하지 않는다.
+- 회원가입, 세션, 역할, 인증 Guard를 추가하지 않는다.
+- 인증용 토큰(JWT, 세션 토큰)은 추가하지 않는다. 단, 백엔드 API 연동에 필요한 익명 식별 토큰(`src/shared/token/anonymous-token.ts`)은 허용한다.
 - Public 라우트를 인증으로 막지 않는다.
 
 ## UI Rules
