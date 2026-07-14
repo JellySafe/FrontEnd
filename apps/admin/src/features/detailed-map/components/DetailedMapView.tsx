@@ -26,6 +26,7 @@ export function DetailedMapView({ beachId: beachIdParam }: DetailedMapViewProps)
     isLoading,
     isError,
     isInvalidId,
+    isRefreshing,
     refresh,
     reloadHistory,
   } = useDetailedMapData(beachIdParam);
@@ -109,6 +110,7 @@ export function DetailedMapView({ beachId: beachIdParam }: DetailedMapViewProps)
       />
       <DetailedMapDetail
         beach={beach}
+        isRefreshing={isRefreshing}
         onRefresh={refresh}
         onSelectRecommendation={handleSelectRecommendation}
       />

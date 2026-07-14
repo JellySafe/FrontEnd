@@ -13,6 +13,7 @@ export type DetailedMapDetailProps = {
   beach: DetailedBeach;
   onSelectRecommendation: (recommendationId: string) => void;
   onRefresh?: () => void;
+  isRefreshing?: boolean;
 };
 
 // 상세 분석 뷰: 메타 정보 + 시간별 위험도 예측 차트 + 시간별 위험 원인 + 대응 권고.
@@ -20,6 +21,7 @@ export function DetailedMapDetail({
   beach,
   onSelectRecommendation,
   onRefresh,
+  isRefreshing = false,
 }: DetailedMapDetailProps) {
   const [causeTab, setCauseTab] = useState<TimeFrame>("current");
   const frame = beach.causeByFrame[causeTab];
@@ -41,11 +43,16 @@ export function DetailedMapDetail({
         <button
           aria-label="새로고침"
           className="text-icon-tertiary disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={!onRefresh}
+          disabled={isRefreshing || !onRefresh}
           onClick={onRefresh}
           type="button"
         >
-          <RefreshIcon className="size-[20px]" />
+          <RefreshIcon
+            className={[
+              "size-[20px]",
+              isRefreshing ? "animate-spin" : "",
+            ].join(" ")}
+          />
         </button>
       </div>
 
