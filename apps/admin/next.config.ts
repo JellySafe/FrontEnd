@@ -5,7 +5,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const target = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
     if (!target) return [];
-    return [{ source: "/api/:path*", destination: `${target}/api/:path*` }];
+    return [
+      { source: "/api/:path*", destination: `${target}/api/:path*` },
+      { source: "/uploads/:path*", destination: `${target}/uploads/:path*` },
+    ];
   },
 };
 

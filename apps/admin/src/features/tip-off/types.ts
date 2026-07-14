@@ -13,7 +13,7 @@ export type RejectReason =
 export type ThumbnailState = "loaded" | "loading" | "error" | "empty";
 
 export type TipOffReportType = "mass-sighting" | "sting-incident" | "sighting";
-export type AiVerdict = "not-jellyfish" | "duplicate" | "unclear-photo" | "location-error";
+export type AiVerdict = "normal" | "toxic_suspected" | "unknown";
 export type AdminStatus =
   | "unreviewed"
   | "approved"
@@ -71,10 +71,9 @@ export const REPORT_TYPE_LABEL: Record<TipOffReportType, string> = {
 };
 
 export const AI_VERDICT_LABEL: Record<AiVerdict, string> = {
-  "not-jellyfish": "해파리 아님",
-  duplicate: "중복",
-  "unclear-photo": "사진 불명확",
-  "location-error": "위치 오류",
+  normal: "일반",
+  toxic_suspected: "독성 의심",
+  unknown: "판별 불가",
 };
 
 export const ADMIN_STATUS_LABEL: Record<AdminStatus, string> = {

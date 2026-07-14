@@ -157,3 +157,26 @@ export type RecordOperationActionResponse = {
   createdBy: number;
   createdAt: string;
 };
+
+export type BackendReportType = "general" | "multiple" | "sting";
+export type BackendReportStatus =
+  | "received"
+  | "ai_processing"
+  | "ai_done"
+  | "verified"
+  | "rejected"
+  | "hold"
+  | "reflected";
+export type BackendAiResult = "normal" | "toxic_suspected" | "unknown";
+
+export type ReportListItemResponse = {
+  reportId: number;
+  beachId: number | null;
+  beachName: string | null;
+  reportType: BackendReportType;
+  status: BackendReportStatus;
+  aiResult: BackendAiResult | null;
+  aiConfidence: number | null;
+  thumbnailUrl: string | null;
+  submittedAt: string;
+};

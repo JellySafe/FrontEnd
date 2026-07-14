@@ -3,11 +3,7 @@
 import { Dropdown } from "@jellysafe/design-system";
 import { useCallback, useMemo, useState } from "react";
 import { CloseIcon } from "@/shared/ui/icons";
-import {
-  getTipOffDetail,
-  reviewDecisionToAdminStatus,
-  TIP_OFF_TOTAL_COUNT,
-} from "../mocks/tip-off.mock";
+import { getTipOffDetail, reviewDecisionToAdminStatus } from "../mocks/tip-off.mock";
 import { useTipOffListState } from "../hooks/useTipOffListState";
 import {
   SORT_LABEL,
@@ -21,8 +17,6 @@ import { TipOffDetailPanel } from "./TipOffDetailPanel";
 import { TipOffFilters } from "./TipOffFilters";
 import { TipOffImagePreviewModal } from "./TipOffImagePreviewModal";
 import { TipOffTable } from "./TipOffTable";
-
-const PHOTO = "/assets/tip-off/thumbnail-placeholder.png";
 
 // 단일 라우트에서 목록·상세 뷰를 union 상태로 전환한다.
 export function TipOffView() {
@@ -69,9 +63,11 @@ export function TipOffView() {
     handleBackToList();
   };
 
-  // 로드 실패 썸네일 재시도 시 즉시 이미지를 로드한다.
+  // 로드 실패 썸네일 재시도 시 원본 URL로 다시 로드한다.
   const handleRetryThumbnail = (id: string) => {
-    listState.updateThumbnailState(id, "loaded", PHOTO);
+    const row = listState.rows.find((item) => item.id === id);
+    if (!row?.thumbnailSrc) return;
+    listState.updateThumbnailState(id, "loaded", row.thumbnailSrc);
   };
 
   if (screen === "detail" && detail) {
@@ -166,15 +162,25 @@ export function TipOffView() {
       </div>
 
       <p className="w-full text-right text-caption-small-pc text-text-tertiary">
-        전체: {TIP_OFF_TOTAL_COUNT}
+        전체: {listState.totalCount}
       </p>
 
-      <TipOffTable
-        onRetryThumbnail={handleRetryThumbnail}
-        onSelect={handleSelectRow}
-        rows={listState.visibleRows}
-        selectedId={listState.selectedId}
-      />
+      {listState.isLoading && listState.rows.length === 0 ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <p className="text-body-xsmall-pc text-text-tertiary">제보 목록을 불러오는 중입니다</p>
+        </div>
+      ) : listState.isError ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <p className="text-body-xsmall-pc text-text-tertiary">제보 목록을 불러오지 못했습니다</p>
+        </div>
+      ) : (
+        <TipOffTable
+          onRetryThumbnail={handleRetryThumbnail}
+          onSelect={handleSelectRow}
+          rows={listState.visibleRows}
+          selectedId={listState.selectedId}
+        />
+      )}
     </div>
   );
 }

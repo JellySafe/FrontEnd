@@ -1,7 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { INITIAL_TIP_OFF_ROWS } from "../mocks/tip-off.mock";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { clearAdminSession } from "@/features/admin-auth/model/admin-session";
+import { getLatestRisks } from "@/features/dashboard/api/dashboard-api";
+import { ApiError } from "@/shared/api/http-client";
+import { buildRiskByBeachId, toTipOffListItem } from "../api/mappers";
+import { getAdminReports } from "../api/reports-api";
 import {
   EMPTY_TIP_OFF_FILTER,
   countActiveTipOffFilters,
@@ -20,6 +24,15 @@ const RISK_RANK: Record<RiskLevel, number> = {
   danger: 2,
   critical: 3,
 };
+
+function handleUnauthorized(error: unknown): boolean {
+  if (error instanceof ApiError && error.status === 401) {
+    clearAdminSession();
+    window.location.assign("/login");
+    return true;
+  }
+  return false;
+}
 
 function matchesFilter(
   item: TipOffListItem,
@@ -69,13 +82,68 @@ function sortRows(rows: TipOffListItem[], sort: TipOffSort): TipOffListItem[] {
 
 // 목록 검색·정렬·필터 draft/apply 로직을 분리한다.
 export function useTipOffListState() {
-  const [rows, setRows] = useState<TipOffListItem[]>(INITIAL_TIP_OFF_ROWS);
+  const [rows, setRows] = useState<TipOffListItem[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<TipOffSort>("latest");
   const [appliedFilter, setAppliedFilter] = useState<TipOffFilterState>(EMPTY_TIP_OFF_FILTER);
   const [draftFilter, setDraftFilter] = useState<TipOffFilterState>(EMPTY_TIP_OFF_FILTER);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const loadReports = useCallback(async () => {
+    const [reportsResponse, risks] = await Promise.all([
+      getAdminReports({ page: 1, size: 50 }),
+      getLatestRisks("now"),
+    ]);
+    const riskByBeachId = buildRiskByBeachId(risks);
+    const mapped = reportsResponse.items.map((item) => toTipOffListItem(item, riskByBeachId));
+    return { rows: mapped, totalCount: reportsResponse.total };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setIsLoading(true);
+    loadReports()
+      .then(({ rows: loadedRows, totalCount: loadedTotal }) => {
+        if (cancelled) return;
+        setRows(loadedRows);
+        setTotalCount(loadedTotal);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        if (handleUnauthorized(error)) return;
+        setIsError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadReports]);
+
+  const refresh = useCallback(() => {
+    setIsError(false);
+    setIsLoading(true);
+
+    loadReports()
+      .then(({ rows: loadedRows, totalCount: loadedTotal }) => {
+        setRows(loadedRows);
+        setTotalCount(loadedTotal);
+      })
+      .catch((error) => {
+        if (handleUnauthorized(error)) return;
+        setIsError(true);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [loadReports]);
 
   const visibleRows = useMemo(
     () => sortRows(rows.filter((row) => matchesFilter(row, appliedFilter, query)), sort),
@@ -156,6 +224,10 @@ export function useTipOffListState() {
 
   return {
     rows,
+    totalCount,
+    isLoading,
+    isError,
+    refresh,
     query,
     setQuery,
     sort,
