@@ -5,9 +5,9 @@ import { useAdminLogin } from "../model/useAdminLogin";
 
 export function LoginForm() {
   const {
-    username,
+    email,
     password,
-    setUsername,
+    setEmail,
     setPassword,
     error,
     isSubmitting,
@@ -23,13 +23,14 @@ export function LoginForm() {
     >
       <div className="flex w-full flex-col gap-(--gap-3)">
         <TextField
-          autoComplete="username"
-          label="아이디"
-          onChange={(event) => setUsername(event.target.value)}
-          onClear={username ? () => setUsername("") : undefined}
-          placeholder="아이디를 입력하세요"
+          autoComplete="email"
+          label="이메일"
+          onChange={(event) => setEmail(event.target.value)}
+          onClear={email ? () => setEmail("") : undefined}
+          placeholder="이메일을 입력하세요"
           state={state}
-          value={username}
+          type="email"
+          value={email}
         />
         <TextField
           autoComplete="current-password"
