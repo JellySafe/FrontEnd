@@ -171,8 +171,8 @@ export function CurrentLocationScreen({
           onCenterChanged={setTrackedCenter}
         />
 
-        {/* 중앙 고정 마커: 핀 끝이 지도 중심. 피드백 반영해 DS 기본 대비 120% */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 origin-bottom -translate-x-1/2 -translate-y-full scale-[1.2]">
+        {/* 중앙 고정 마커: 핀 끝이 지도 중심. 2배 기준 ×1.2 → 원본 대비 2.4배 */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 origin-bottom -translate-x-1/2 -translate-y-full scale-[2.4]">
           <MapPin status="primary" />
         </div>
 
