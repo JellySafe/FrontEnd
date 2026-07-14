@@ -218,6 +218,20 @@ export function NotificationView() {
     setActiveTab(tab);
     if (tab === "inbox") {
       setHasUnread(false);
+
+      if (inbox.length === 0) {
+        setIsInboxLoading(true);
+      }
+      setIsInboxError(false);
+
+      loadInbox()
+        .catch((error) => {
+          if (handleUnauthorized(error)) return;
+          setIsInboxError(true);
+        })
+        .finally(() => {
+          setIsInboxLoading(false);
+        });
     }
   };
 
@@ -293,7 +307,16 @@ export function NotificationView() {
 
       await loadInbox();
       setIsGenerated(true);
-      setHasUnread(true);
+
+      const sentToStaff = recipients.some(
+        (recipient) => recipient === "admin" || recipient === "operator",
+      );
+      if (sentToStaff) {
+        setActiveTab("inbox");
+        setHasUnread(false);
+      } else {
+        setHasUnread(true);
+      }
     } catch (error) {
       if (handleUnauthorized(error)) return;
 

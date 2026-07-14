@@ -95,6 +95,7 @@ export async function getJson<T>(path: string, init?: RequestInit): Promise<T> {
   const url = buildUrl(path);
   const response = await fetch(url, {
     ...init,
+    cache: init?.cache ?? "no-store",
     headers: { Accept: "application/json", ...mergeAuthHeaders(init?.headers) },
   });
 
