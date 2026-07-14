@@ -56,7 +56,9 @@ export function PublicPageShell({
                 "overflow-y-auto overscroll-y-contain",
               ].join(" ")
             : "overflow-hidden",
-          hasFooter ? "pb-[calc(var(--padding-10)+var(--padding-8))]" : "",
+          hasFooter
+            ? "pb-[calc(var(--padding-10)+var(--padding-8)+env(safe-area-inset-bottom))]"
+            : "",
           contentClassName ?? "px-(--padding-5) pt-(--padding-8)",
         ]
           .filter(Boolean)

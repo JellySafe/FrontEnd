@@ -26,7 +26,7 @@ export function NavigationBar({
     <nav
       aria-label={ariaLabel}
       className={[
-        "flex w-full items-center bg-bg-default pt-(--padding-3) pb-(--padding-8) drop-shadow-[0_0_4px_var(--color-alpha-black-5)]",
+        "flex w-full items-center bg-bg-default pt-(--padding-3) pb-[max(var(--padding-8),env(safe-area-inset-bottom))] drop-shadow-[0_0_4px_var(--color-alpha-black-5)]",
         className,
       ]
         .filter(Boolean)

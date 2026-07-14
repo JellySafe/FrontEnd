@@ -156,7 +156,7 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
   return (
     <>
       <PublicPageShell
-        contentClassName="flex flex-col gap-(--gap-5) px-(--padding-5) pt-(--padding-8) pb-(--padding-8)"
+        contentClassName="flex flex-col gap-(--gap-5) px-(--padding-5) pt-(--padding-8)"
         footer={<NavigationBar activeKey="report" items={PUBLIC_NAV_ITEMS} />}
       >
         {/* 이미지 업로드 */}
