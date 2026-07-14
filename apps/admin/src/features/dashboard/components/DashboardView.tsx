@@ -92,22 +92,16 @@ export function DashboardView() {
   const selectedBeach = visibleBeaches.find((beach) => beach.id === selectedId) ?? null;
   const detail = selectedBeach ? getBeachDetail(selectedBeach) : null;
 
-  const handleSelect = useCallback(
-    (id: string) => {
-      setSelectedId(id);
-      const beach = beaches.find((item) => item.id === id);
-      if (map && beach) {
-        panToAvoidPanel(map, beach.point);
-      }
-      const container = listScrollRef.current;
-      const item = listItemRefs.current.get(id);
-      if (container && item) {
-        container.scrollTo({ top: item.offsetTop - container.offsetTop, behavior: "smooth" });
-      }
-    },
-    [map, beaches],
-  );
+  const handleSelect = useCallback((id: string) => {
+    setSelectedId(id);
+    const container = listScrollRef.current;
+    const item = listItemRefs.current.get(id);
+    if (container && item) {
+      container.scrollTo({ top: item.offsetTop - container.offsetTop, behavior: "smooth" });
+    }
+  }, []);
 
+  // pan은 한 번만: 선택 + 지도 ready 시. handleSelect와 중복 호출하면 pan 중 왼쪽이 잘려 보인다.
   useEffect(() => {
     if (!map || !selectedBeach) return;
     panToAvoidPanel(map, selectedBeach.point);
@@ -185,7 +179,7 @@ export function DashboardView() {
                 selectedId={selectedId}
                 totalCount={visibleBeaches.length}
               />
-              <div className="relative min-w-0 flex-1 overflow-hidden">
+              <div className="relative min-w-0 flex-1">
                 <KakaoMapCanvas
                   center={JEJU_CENTER}
                   fitPoints={fitPoints}
@@ -220,11 +214,13 @@ export function DashboardView() {
                 {selectedBeach && detail ? (
                   <DashboardDetailPanel detail={detail} onClose={() => setSelectedId(null)} />
                 ) : selectedBeach ? (
-                  <div className="animate-panel-slide-up absolute top-[16px] bottom-[16px] left-[16px] z-40 flex w-[400px] flex-col items-center justify-center gap-(--gap-4) rounded-lg bg-bg-default p-(--padding-7) shadow-[0_0_4px_var(--color-alpha-black-5)]">
-                    <p className="text-body-xsmall-pc text-text-tertiary">위험도 상세를 불러오지 못했습니다</p>
-                    <Button onClick={() => setSelectedId(null)} platform="pc" size="medium" type="button" variant="secondary">
-                      닫기
-                    </Button>
+                  <div className="absolute top-[16px] bottom-[16px] left-[16px] z-40 w-[400px] overflow-hidden">
+                    <div className="animate-panel-slide-up flex h-full flex-col items-center justify-center gap-(--gap-4) rounded-lg bg-bg-default p-(--padding-7) shadow-[0_0_4px_var(--color-alpha-black-5)]">
+                      <p className="text-body-xsmall-pc text-text-tertiary">위험도 상세를 불러오지 못했습니다</p>
+                      <Button onClick={() => setSelectedId(null)} platform="pc" size="medium" type="button" variant="secondary">
+                        닫기
+                      </Button>
+                    </div>
                   </div>
                 ) : null}
               </div>
