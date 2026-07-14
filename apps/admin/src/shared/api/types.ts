@@ -244,3 +244,27 @@ export type AdminBeachItemResponse = {
   vulnerabilityScore?: number;
   isActive?: boolean;
 };
+
+export type DailyReportResponse = {
+  reportId: number | null;
+  beachId: number;
+  reportDate: string;
+  maxRiskLevel: BackendRiskLevel | null;
+  riskChangeSummary: string | null;
+  reportCount: number;
+  toxicCount: number;
+  stingCount: number;
+  actionCount: number;
+  memo: string | null;
+  summaryJson: unknown | null;
+  persisted: boolean;
+};
+
+export type GenerateDailyReportRequest = {
+  date: string;
+  beachId: number;
+};
+
+export type UpdateDailyReportMemoRequest = {
+  memo: string | null;
+};

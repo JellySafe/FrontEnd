@@ -15,8 +15,11 @@ export type ReportStats = {
 };
 
 export type ReportData = {
+  reportId: number;
   hourly: ReportHourlyRisk[];
   stats: ReportStats;
   causes: RiskCause[];
   history: ResponseLogEntry[];
+  riskChangeSummary: string | null;
+  maxRisk: RiskLevel | null;
 };

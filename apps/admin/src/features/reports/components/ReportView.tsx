@@ -2,10 +2,14 @@
 
 import { Badge, Button, Card } from "@jellysafe/design-system";
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { clearAdminSession } from "@/features/admin-auth/model/admin-session";
+import { getAdminBeaches } from "@/features/beaches/api/beaches-api";
+import { getAdminBeachRisk } from "@/features/dashboard/api/dashboard-api";
 import { ResponseHistoryItem } from "@/features/detailed-map/components/ResponseHistoryItem";
-import { BEACHES } from "@/features/dashboard/mocks/dashboard.mock";
-import { RISK_LABEL } from "@/shared/risk/types";
+import { getBeachOperationActions } from "@/features/detailed-map/api/detailed-map-api";
+import { ApiError } from "@/shared/api/http-client";
 import { useScrollIndicator } from "@/shared/hooks/useScrollIndicator";
+import { RISK_LABEL } from "@/shared/risk/types";
 import { AdminLargeTextField } from "@/shared/ui/AdminLargeTextField";
 import {
   CalendarIcon,
@@ -13,8 +17,18 @@ import {
   ChevronRightIcon,
   SearchIcon,
 } from "@/shared/ui/icons";
-import { EMPTY_HOURLY, REPORT_DATA } from "../mocks/reports.mock";
-import type { ReportStatus } from "../types";
+import {
+  generateDailyReport,
+  updateDailyReportMemo,
+} from "../api/daily-reports-api";
+import {
+  EMPTY_HOURLY,
+  causesFromBeachRisk,
+  filterActionsByReportDate,
+  toReportData,
+  toReportHistory,
+} from "../api/mappers";
+import type { ReportData, ReportStatus } from "../types";
 import { ReportLoadingSkeleton } from "./ReportLoadingSkeleton";
 
 const UP_DOWN_ICON_PATH =
@@ -29,6 +43,31 @@ const STAT_ITEMS = [
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 const SCROLL_THUMB_WIDTH = 80;
+
+const GENERATE_ERROR_MESSAGE = "리포트 생성에 실패했습니다. 다시 시도해 주세요.";
+const MEMO_SAVE_ERROR_MESSAGE = "메모 저장에 실패했습니다. 다시 시도해 주세요.";
+
+type BeachOption = {
+  id: string;
+  name: string;
+  region: string;
+};
+
+function handleUnauthorized(error: unknown): boolean {
+  if (error instanceof ApiError && error.status === 401) {
+    clearAdminSession();
+    window.location.assign("/login");
+    return true;
+  }
+  return false;
+}
+
+function formatApiErrorDetail(error: unknown): string | null {
+  if (error instanceof ApiError && error.message) {
+    return error.message;
+  }
+  return null;
+}
 
 function formatDisplayDate(value: string): string {
   const [year, month, day] = value.split("-");
@@ -170,8 +209,13 @@ export function ReportView() {
   const [date, setDate] = useState<string | null>(null);
   const [beachId, setBeachId] = useState<string | null>(null);
   const [readyKey, setReadyKey] = useState<string | null>(null);
+  const [reportData, setReportData] = useState<ReportData | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
   const [memo, setMemo] = useState("");
+  const [isSavingMemo, setIsSavingMemo] = useState(false);
+  const [memoError, setMemoError] = useState<string | null>(null);
+  const [beaches, setBeaches] = useState<BeachOption[]>([]);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
@@ -182,25 +226,48 @@ export function ReportView() {
   const dateContainerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTrackRef = useRef<HTMLDivElement>(null);
-  const generateTimerRef = useRef<number | null>(null);
   const locationListRef = useScrollIndicator<HTMLUListElement>();
   const locationListId = useId();
   const dateInputId = useId();
 
+  useEffect(() => {
+    let cancelled = false;
+
+    getAdminBeaches()
+      .then((items) => {
+        if (cancelled) return;
+        setBeaches(
+          items.map((beach) => ({
+            id: String(beach.beachId),
+            name: beach.name,
+            region: beach.region,
+          })),
+        );
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        handleUnauthorized(error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const selectedBeach = useMemo(
-    () => BEACHES.find((beach) => beach.id === beachId) ?? null,
-    [beachId],
+    () => beaches.find((beach) => beach.id === beachId) ?? null,
+    [beaches, beachId],
   );
 
   const filteredBeaches = useMemo(() => {
     const query = locationQuery.trim().toLowerCase();
-    if (!query) return BEACHES;
-    return BEACHES.filter(
+    if (!query) return beaches;
+    return beaches.filter(
       (beach) =>
         beach.name.toLowerCase().includes(query) ||
-        beach.address.toLowerCase().includes(query),
+        beach.region.toLowerCase().includes(query),
     );
-  }, [locationQuery]);
+  }, [beaches, locationQuery]);
 
   const filterKey = date && beachId ? `${date}:${beachId}` : null;
   const canGenerate =
@@ -212,16 +279,8 @@ export function ReportView() {
       ? "ready"
       : "empty";
 
-  useEffect(() => {
-    return () => {
-      if (generateTimerRef.current !== null) {
-        window.clearTimeout(generateTimerRef.current);
-      }
-    };
-  }, []);
-
-  const hourly = status === "ready" ? REPORT_DATA.hourly : EMPTY_HOURLY;
-  const isReady = status === "ready";
+  const hourly = status === "ready" && reportData ? reportData.hourly : EMPTY_HOURLY;
+  const isReady = status === "ready" && reportData !== null;
 
   const updateScrollThumb = useCallback(() => {
     const scrollEl = scrollRef.current;
@@ -278,8 +337,17 @@ export function ReportView() {
     return () => resizeObserver.disconnect();
   }, [hourly, status, updateScrollThumb]);
 
+  const resetReport = () => {
+    setReadyKey(null);
+    setReportData(null);
+    setMemo("");
+    setGenerateError(null);
+    setMemoError(null);
+  };
+
   const handleSelectBeach = (nextBeachId: string) => {
     setBeachId(nextBeachId);
+    resetReport();
     setIsLocationOpen(false);
     setLocationQuery("");
   };
@@ -295,6 +363,7 @@ export function ReportView() {
 
   const handleSelectDate = (value: string) => {
     setDate(value);
+    resetReport();
     setIsCalendarOpen(false);
   };
 
@@ -303,22 +372,63 @@ export function ReportView() {
     setViewMonth(month);
   };
 
-  const handleGenerate = () => {
-    if (!canGenerate || !filterKey) return;
+  const handleGenerate = async () => {
+    if (!canGenerate || !filterKey || !date || !beachId) return;
 
     setIsGenerating(true);
-    if (generateTimerRef.current !== null) {
-      window.clearTimeout(generateTimerRef.current);
-    }
-    generateTimerRef.current = window.setTimeout(() => {
+    setGenerateError(null);
+
+    try {
+      const numericBeachId = Number(beachId);
+      const response = await generateDailyReport({
+        date,
+        beachId: numericBeachId,
+      });
+
+      const [actionsResponse, beachRisk] = await Promise.all([
+        getBeachOperationActions(numericBeachId),
+        getAdminBeachRisk(numericBeachId),
+      ]);
+
+      const filteredActions = filterActionsByReportDate(actionsResponse.items, date);
+      const causes = causesFromBeachRisk(beachRisk);
+      const history = toReportHistory(filteredActions);
+      const nextReportData = toReportData(response, causes, history);
+
+      setReportData(nextReportData);
+      setMemo(response.memo ?? "");
       setReadyKey(filterKey);
+    } catch (error) {
+      if (handleUnauthorized(error)) return;
+
+      const detail = formatApiErrorDetail(error);
+      setGenerateError(
+        detail ? `${GENERATE_ERROR_MESSAGE} (${detail})` : GENERATE_ERROR_MESSAGE,
+      );
+    } finally {
       setIsGenerating(false);
-      generateTimerRef.current = null;
-    }, 400);
+    }
   };
 
-  const handleSaveMemo = () => {
-    setMemo("");
+  const handleSaveMemo = async () => {
+    const trimmedMemo = memo.trim();
+    if (!trimmedMemo || !reportData?.reportId || isSavingMemo) return;
+
+    setIsSavingMemo(true);
+    setMemoError(null);
+
+    try {
+      await updateDailyReportMemo(reportData.reportId, { memo: trimmedMemo });
+    } catch (error) {
+      if (handleUnauthorized(error)) return;
+
+      const detail = formatApiErrorDetail(error);
+      setMemoError(
+        detail ? `${MEMO_SAVE_ERROR_MESSAGE} (${detail})` : MEMO_SAVE_ERROR_MESSAGE,
+      );
+    } finally {
+      setIsSavingMemo(false);
+    }
   };
 
   return (
@@ -440,6 +550,10 @@ export function ReportView() {
           </div>
         </div>
 
+        {generateError ? (
+          <p className="text-body-xxsmall-pc text-text-error">{generateError}</p>
+        ) : null}
+
         <Button
           className="w-full"
           disabled={!canGenerate}
@@ -502,6 +616,11 @@ export function ReportView() {
                 style={{ left: scrollThumbLeft }}
               />
             </div>
+            {isReady && reportData?.riskChangeSummary ? (
+              <p className="text-body-xxsmall-pc text-text-secondary">
+                {reportData.riskChangeSummary}
+              </p>
+            ) : null}
           </section>
 
           <section className="flex gap-(--gap-3)">
@@ -518,7 +637,7 @@ export function ReportView() {
                     isReady ? "text-text-primary" : "text-text-tertiary",
                   ].join(" ")}
                 >
-                  {isReady ? REPORT_DATA.stats[item.key] : "-"}
+                  {isReady && reportData ? reportData.stats[item.key] : "-"}
                 </p>
               </Card>
             ))}
@@ -526,43 +645,55 @@ export function ReportView() {
 
           <section className="flex flex-col gap-(--gap-3)">
             <h2 className="text-heading-xsmall-pc text-text-primary">주요 위험 원인</h2>
-            {isReady ? (
+            {isReady && reportData ? (
               <Card className="p-(--padding-7)" variant="surface">
-                <div className="flex flex-col gap-[12px]">
-                  {REPORT_DATA.causes.map((cause) => (
-                    <div className="flex flex-col gap-(--gap-3)" key={cause.title}>
-                      <span className="inline-flex w-fit items-center rounded-lg bg-bg-default px-(--padding-3) py-(--padding-2) text-body-xsmall-pc text-text-primary">
-                        {cause.title}
-                      </span>
-                      <p className="text-body-xxsmall-pc text-text-secondary">
-                        {cause.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                {reportData.causes.length > 0 ? (
+                  <div className="flex flex-col gap-[12px]">
+                    {reportData.causes.map((cause) => (
+                      <div className="flex flex-col gap-(--gap-3)" key={cause.title}>
+                        <span className="inline-flex w-fit items-center rounded-lg bg-bg-default px-(--padding-3) py-(--padding-2) text-body-xsmall-pc text-text-primary">
+                          {cause.title}
+                        </span>
+                        <p className="text-body-xxsmall-pc text-text-secondary">
+                          {cause.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-body-xxsmall-pc text-text-tertiary">
+                    표시할 위험 원인이 없습니다
+                  </p>
+                )}
               </Card>
             ) : (
               <Card className="min-h-[348px]" variant="surface" />
             )}
           </section>
 
-          {isReady ? (
+          {isReady && reportData ? (
             <>
               <section className="flex flex-col gap-(--gap-3)">
                 <h2 className="text-heading-xsmall-pc text-text-primary">대응 기록</h2>
-                <div className="flex flex-col gap-(--gap-5)">
-                  {REPORT_DATA.history.map((entry, index) => (
-                    <Fragment key={entry.id}>
-                      {index > 0 ? (
-                        <div
-                          aria-hidden="true"
-                          className="h-px w-full bg-border-default"
-                        />
-                      ) : null}
-                      <ResponseHistoryItem entry={entry} />
-                    </Fragment>
-                  ))}
-                </div>
+                {reportData.history.length > 0 ? (
+                  <div className="flex flex-col gap-(--gap-5)">
+                    {reportData.history.map((entry, index) => (
+                      <Fragment key={entry.id}>
+                        {index > 0 ? (
+                          <div
+                            aria-hidden="true"
+                            className="h-px w-full bg-border-default"
+                          />
+                        ) : null}
+                        <ResponseHistoryItem entry={entry} />
+                      </Fragment>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-body-xxsmall-pc text-text-tertiary">
+                    해당 날짜의 대응 기록이 없습니다
+                  </p>
+                )}
               </section>
 
               <section className="flex flex-col gap-(--gap-3)">
@@ -570,12 +701,18 @@ export function ReportView() {
                   운영 메모
                 </h2>
                 <AdminLargeTextField
-                  actionDisabled={!memo.trim()}
+                  actionDisabled={!memo.trim() || isSavingMemo}
                   actionLabel="저장"
                   aria-label="운영 메모"
+                  disabled={isSavingMemo}
+                  error={memoError ?? undefined}
                   onAction={handleSaveMemo}
-                  onChange={(event) => setMemo(event.target.value)}
+                  onChange={(event) => {
+                    setMemoError(null);
+                    setMemo(event.target.value);
+                  }}
                   placeholder="내용을 입력하세요"
+                  state={memoError ? "error" : isSavingMemo ? "loading" : "default"}
                   value={memo}
                 />
               </section>
