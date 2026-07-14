@@ -112,6 +112,7 @@ export function NotificationView() {
       return merged;
     });
     setHasUnread(merged.some((item) => item.isUnread));
+    setIsInboxError(false);
     return merged;
   }, []);
 
@@ -362,10 +363,13 @@ export function NotificationView() {
 
       setIsGenerated(true);
 
-      void loadInbox();
-      window.setTimeout(() => {
-        void loadInbox();
-      }, INBOX_REFETCH_DELAY_MS);
+      const refreshInboxQuietly = () => {
+        void loadInbox().catch((error) => {
+          if (handleUnauthorized(error)) return;
+        });
+      };
+      refreshInboxQuietly();
+      window.setTimeout(refreshInboxQuietly, INBOX_REFETCH_DELAY_MS);
     } catch (error) {
       if (handleUnauthorized(error)) return;
 
@@ -602,7 +606,7 @@ export function NotificationView() {
             <p className="text-body-xsmall-pc text-text-tertiary">
               알림을 불러오는 중입니다
             </p>
-          ) : isInboxError ? (
+          ) : isInboxError && inbox.length === 0 ? (
             <p className="text-body-xsmall-pc text-text-tertiary">
               알림을 불러오지 못했습니다
             </p>

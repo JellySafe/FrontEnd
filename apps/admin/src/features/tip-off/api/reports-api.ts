@@ -1,6 +1,7 @@
 import { getJson, patchJson } from "@/shared/api/http-client";
 import type {
   PaginatedResponse,
+  ReportDetailResponse,
   ReportListItemResponse,
   ReviewReportRequest,
   ReviewReportResponse,
@@ -18,6 +19,12 @@ export function getAdminReports(
   return getJson<PaginatedResponse<ReportListItemResponse>>(
     `/api/admin/reports?${searchParams.toString()}`,
   );
+}
+
+export function getAdminReportDetail(
+  reportId: number,
+): Promise<ReportDetailResponse> {
+  return getJson<ReportDetailResponse>(`/api/admin/reports/${reportId}`);
 }
 
 export function reviewReport(

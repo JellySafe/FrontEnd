@@ -185,7 +185,7 @@ export function DashboardView() {
                 selectedId={selectedId}
                 totalCount={visibleBeaches.length}
               />
-              <div className="relative min-w-0 flex-1">
+              <div className="relative min-w-0 flex-1 overflow-hidden">
                 <KakaoMapCanvas
                   center={JEJU_CENTER}
                   fitPoints={fitPoints}

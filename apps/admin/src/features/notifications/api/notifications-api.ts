@@ -15,15 +15,9 @@ export function getAdminNotifications(
     page: String(params?.page ?? 1),
     size: String(params?.size ?? 50),
   });
-  searchParams.set("_t", String(Date.now()));
+  // page/size 외 쿼리는 NestJS forbidNonWhitelisted 로 400 난다.
   return getJson<PaginatedResponse<AdminNotificationListItemResponse>>(
     `/api/admin/notifications?${searchParams.toString()}`,
-    {
-      headers: {
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-      },
-    },
   );
 }
 

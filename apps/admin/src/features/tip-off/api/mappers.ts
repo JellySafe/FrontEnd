@@ -4,6 +4,7 @@ import type {
   BackendReportType,
   BackendReviewStatus,
   LatestRiskResponse,
+  ReportDetailResponse,
   ReportListItemResponse,
   ReviewReportRequest,
 } from "@/shared/api/types";
@@ -14,6 +15,7 @@ import type {
   RejectReason,
   ReviewDecision,
   ThumbnailState,
+  TipOffDetail,
   TipOffListItem,
   TipOffReportType,
 } from "../types";
@@ -119,11 +121,58 @@ export function toReviewRequest(
   return { reviewStatus };
 }
 
+// 상세 응답을 기존 목록 행(계산된 위험도·라벨)에 얹어 TipOffDetail을 만든다.
+export function toTipOffDetail(
+  detail: ReportDetailResponse,
+  row: TipOffListItem,
+): TipOffDetail {
+  // 사진: imageUrl 우선, 없으면 thumbnailUrl 폴백
+  const media = resolveMediaUrl(detail.imageUrl ?? detail.thumbnailUrl);
+  const images = media.src ? [media.src] : [];
+
+  // 좌표가 있을 때만 지도 표시. 없으면(파기) null.
+  const location =
+    detail.lat !== null && detail.lng !== null
+      ? { lat: detail.lat, lng: detail.lng }
+      : null;
+
+  // 위치 라벨: 배정 해변명 → 미배정이면 가장 가까운 해변 맥락
+  const locationLabel = detail.beachName
+    ? detail.beachName
+    : detail.nearestBeachName
+      ? `${detail.nearestBeachName} 인근${
+          detail.nearestBeachDistanceKm !== null
+            ? ` (약 ${detail.nearestBeachDistanceKm.toFixed(1)}km)`
+            : ""
+        }`
+      : "위치 정보 없음";
+
+  return {
+    ...row,
+    description: `목격 시각: ${formatDateTime(detail.occurredAt)}`,
+    images,
+    location,
+    locationLabel,
+  };
+}
+
+// 상세 API 실패 시 목록 행만으로 채우는 폴백(사진 썸네일만, 좌표 없음).
+export function toFallbackDetail(row: TipOffListItem): TipOffDetail {
+  return {
+    ...row,
+    description: "상세 정보를 불러오지 못했습니다.",
+    images: row.thumbnailSrc ? [row.thumbnailSrc] : [],
+    location: null,
+    locationLabel: row.beach || "위치 정보 없음",
+  };
+}
+
 export function toTipOffListItem(
   item: ReportListItemResponse,
   riskByBeachId: Map<number, RiskLevel>,
 ): TipOffListItem {
-  const thumbnail = resolveMediaUrl(item.thumbnailUrl);
+  // thumbnailUrl은 사실상 항상 null이라 imageUrl로 폴백
+  const thumbnail = resolveMediaUrl(item.thumbnailUrl ?? item.imageUrl);
 
   return {
     id: String(item.reportId),

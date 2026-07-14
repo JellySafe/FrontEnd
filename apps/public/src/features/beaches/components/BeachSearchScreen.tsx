@@ -21,6 +21,7 @@ import { useBeachesQuery } from "../api/useBeachesQuery";
 import { filterBeaches, sortBeaches } from "../utils/sort-beaches";
 import type { BeachSortValue } from "../utils/sort-beaches";
 import { AlarmTooltip } from "./AlarmTooltip";
+import { BeachListSkeleton } from "./BeachListSkeleton";
 import { ChevronDownIcon, CloseIcon, MapPinIcon, SearchIcon } from "./icons";
 
 // 알림 유도 말풍선 문구(2줄)
@@ -174,9 +175,7 @@ export function BeachSearchScreen() {
 
         {/* 서버 상태별 분기: 로딩/에러/빈 결과/목록 */}
         {isLoading ? (
-          <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
-            해변 정보를 불러오는 중입니다
-          </p>
+          <BeachListSkeleton />
         ) : isError ? (
           <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
             해변 정보를 불러오지 못했습니다

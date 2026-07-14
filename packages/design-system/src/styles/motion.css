@@ -8,11 +8,15 @@
   }
 }
 
-/* 대시보드 상세 패널: 아래에서 올라오는 등장 */
+/*
+ * 대시보드 상세 패널: 지도 안에서 살짝 올라오는 등장.
+ * translateY(100%) 는 패널 높이만큼 아래에서 시작 → 화면 밖에서 들어오는 느낌이 난다.
+ * 짧은 오프셋으로 지도 내부에서 올라오는 인상으로 맞춘다.
+ */
 @keyframes jellysafe-panel-slide-up {
   from {
     opacity: 0;
-    transform: translateY(100%);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;

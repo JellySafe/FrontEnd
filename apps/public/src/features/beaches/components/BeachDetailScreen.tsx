@@ -9,6 +9,7 @@ import { useBeachesQuery } from "../api/useBeachesQuery";
 import { useBeachRiskQuery } from "../api/useBeachRiskQuery";
 import { pickAlternativeBeaches } from "../utils/pick-alternative-beaches";
 import { AlternativeBeaches } from "./AlternativeBeaches";
+import { BeachDetailSkeleton } from "./BeachDetailSkeleton";
 import { BeachDetailHeader } from "./BeachDetailHeader";
 import { EmergencyGuide } from "./EmergencyGuide";
 import { RiskCauseSection } from "./RiskCauseSection";
@@ -59,7 +60,7 @@ export function BeachDetailScreen({ beachId }: BeachDetailScreenProps) {
   }, [risk]);
 
   if (detailQuery.isLoading || riskQuery.isLoading) {
-    return <DetailMessage>해변 정보를 불러오는 중입니다</DetailMessage>;
+    return <BeachDetailSkeleton />;
   }
 
   // 상세 조회 404는 존재하지 않는 해변으로 안내

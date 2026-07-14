@@ -173,12 +173,34 @@ export type ReportListItemResponse = {
   reportId: number;
   beachId: number | null;
   beachName: string | null;
+  // 배정된 해변 좌표(beachId가 null이면 null)
+  beachLat: number | null;
+  beachLng: number | null;
+  // 제보 좌표(90일 보관 만료 시 null)
+  lat: number | null;
+  lng: number | null;
+  // 해변 미배정 제보의 위치 맥락(beachId가 null일 때만 채워짐)
+  nearestBeachId: number | null;
+  nearestBeachName: string | null;
+  nearestBeachDistanceKm: number | null;
   reportType: BackendReportType;
   status: BackendReportStatus;
   aiResult: BackendAiResult | null;
   aiConfidence: number | null;
+  // 제보 사진 원본 URL(파기된 제보는 null)
+  imageUrl: string | null;
+  // 썸네일 URL(현재 미생성이라 사실상 null → imageUrl로 폴백)
   thumbnailUrl: string | null;
   submittedAt: string;
+};
+
+export type ReportDetailResponse = ReportListItemResponse & {
+  // 사용자가 목격했다고 고른 실제 시각(접수 시각과 다름)
+  occurredAt: string;
+  // 위험도 산출 반영 시각(확인완료 후 재산출 성공 시 채워짐)
+  reflectedAt: string | null;
+  // 중복 후보로 연결된 제보 id
+  duplicateOfReportId: number | null;
 };
 
 export type BackendReviewStatus = "verified" | "rejected" | "hold";
