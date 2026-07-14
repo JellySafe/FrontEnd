@@ -21,13 +21,17 @@ export function ResponseHistoryItem({ entry }: { entry: ResponseLogEntry }) {
         <p aria-hidden="true">&nbsp;</p>
         <p>조치 내용:</p>
         <p>{entry.content}</p>
-        <p aria-hidden="true">&nbsp;</p>
-        <p>조치 결과</p>
-        <ul className="list-disc pl-[24px]">
-          {entry.results.map((result) => (
-            <li key={result}>{result}</li>
-          ))}
-        </ul>
+        {entry.results.length > 0 ? (
+          <>
+            <p aria-hidden="true">&nbsp;</p>
+            <p>조치 결과</p>
+            <ul className="list-disc pl-[24px]">
+              {entry.results.map((result) => (
+                <li key={result}>{result}</li>
+              ))}
+            </ul>
+          </>
+        ) : null}
         {entry.memo ? (
           <>
             <p>추가 메모</p>

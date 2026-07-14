@@ -84,3 +84,76 @@ export type AdminBeachRiskResponse = {
   region: string;
   cards: RiskCardResponse[];
 };
+
+export type OperationStatus =
+  | "normal"
+  | "monitoring_up"
+  | "entry_caution"
+  | "lifeguard_added"
+  | "broadcast"
+  | "zone_control_review"
+  | "entry_ban"
+  | "resumed";
+
+export type OperationStatusResponse = {
+  beachId: number;
+  operationStatus: OperationStatus;
+  actionType: string | null;
+  createdBy: number;
+  createdByName: string | null;
+  createdAt: string;
+};
+
+export type OperationActionListItemResponse = {
+  actionId: number;
+  beachId: number;
+  operationStatus: OperationStatus;
+  actionType: string | null;
+  memo: string | null;
+  riskScoreId: number | null;
+  recommendationId: number | null;
+  createdBy: number;
+  createdByName: string | null;
+  createdAt: string;
+};
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+};
+
+export type RecommendationItemResponse = {
+  recommendationId: number;
+  actionCode: string;
+  riskLevel: BackendRiskLevel;
+  title: string;
+  description: string | null;
+  displayOrder: number;
+};
+
+export type RecommendationViewResponse = {
+  beachId: number;
+  currentRiskLevel: BackendRiskLevel | null;
+  recommendations: RecommendationItemResponse[];
+};
+
+export type RecordOperationActionRequest = {
+  beachId: number;
+  operationStatus: OperationStatus;
+  actionType?: string;
+  memo?: string;
+  riskScoreId?: number;
+  recommendationId?: number;
+};
+
+export type RecordOperationActionResponse = {
+  actionId: number;
+  beachId: number;
+  operationStatus: OperationStatus;
+  previousStatus: string | null;
+  createdBy: number;
+  createdAt: string;
+};

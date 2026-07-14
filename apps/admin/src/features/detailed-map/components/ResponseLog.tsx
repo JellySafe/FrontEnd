@@ -1,24 +1,40 @@
 "use client";
 
-import { Fragment, useState } from "react";
-import { AdminLargeTextField } from "@/shared/ui/AdminLargeTextField";
 import { Chip } from "@jellysafe/design-system";
-import { RESPONSE_ACTIONS, RESPONSE_HISTORY } from "../mocks/detailed-map.mock";
+import { Fragment, useState } from "react";
+import { clearAdminSession } from "@/features/admin-auth/model/admin-session";
+import { ApiError } from "@/shared/api/http-client";
+import type { OperationStatus } from "@/shared/api/types";
+import { AdminLargeTextField } from "@/shared/ui/AdminLargeTextField";
+import { recordOperationAction } from "../api/detailed-map-api";
+import { RESPONSE_ACTIONS } from "../api/mappers";
 import type { ResponseLogEntry } from "../types";
 import { ResponseHistoryItem } from "./ResponseHistoryItem";
 
 const SUBMIT_ERROR_MESSAGE =
   "저장을 실패했습니다. 다시 시도해주세요.\n문제가 지속되면 관리자에게 문의해주세요.";
 
-// 대응 기록 작성 폼 + 이력. 서버 저장 없이 로컬 preview로만 동작한다.
-// 진입 시 수행한 조치는 항상 미선택 상태다.
-export function ResponseLog() {
+export type ResponseLogProps = {
+  beachId: number;
+  history: ResponseLogEntry[];
+  onHistoryReload: () => void;
+  pendingRecommendationId?: number | null;
+  onClearPendingRecommendation?: () => void;
+};
+
+// 대응 기록 작성 폼 + 이력.
+export function ResponseLog({
+  beachId,
+  history,
+  onHistoryReload,
+  pendingRecommendationId,
+  onClearPendingRecommendation,
+}: ResponseLogProps) {
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
   const [memo, setMemo] = useState("");
-  const [history, setHistory] = useState<ResponseLogEntry[]>(RESPONSE_HISTORY);
   const [showActionValidation, setShowActionValidation] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [saveAttemptCount, setSaveAttemptCount] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
 
   const trimmed = memo.trim();
 
@@ -28,40 +44,41 @@ export function ResponseLog() {
     setSubmitError(null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedActionId) {
       setShowActionValidation(true);
       return;
     }
 
-    if (saveAttemptCount === 0) {
-      setSaveAttemptCount(1);
-      setSubmitError(SUBMIT_ERROR_MESSAGE);
-      return;
-    }
-
-    // mock/preview: 서버 저장 없이 로컬 이력에만 추가한다. (백엔드 연동 시 실제 저장 API로 교체)
-    const action = RESPONSE_ACTIONS.find((item) => item.id === selectedActionId);
-    const label = action?.label ?? "대응 기록";
-    const entry: ResponseLogEntry = {
-      id: `log-${Date.now()}`,
-      actionLabel: label,
-      savedAt: "방금 저장 (미리보기)",
-      actionAt: "-",
-      manager: "현재 관리자",
-      content: trimmed || label,
-      results: [label],
-      ...(trimmed ? { memo: trimmed } : {}),
-    };
-    setHistory((prev) => [entry, ...prev]);
-    setSelectedActionId(null);
-    setMemo("");
+    setIsSaving(true);
     setSubmitError(null);
-    setSaveAttemptCount(0);
-    setShowActionValidation(false);
+
+    try {
+      await recordOperationAction({
+        beachId,
+        operationStatus: selectedActionId as OperationStatus,
+        memo: trimmed || undefined,
+        recommendationId: pendingRecommendationId ?? undefined,
+      });
+
+      setSelectedActionId(null);
+      setMemo("");
+      setShowActionValidation(false);
+      onClearPendingRecommendation?.();
+      onHistoryReload();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        clearAdminSession();
+        window.location.assign("/login");
+        return;
+      }
+      setSubmitError(SUBMIT_ERROR_MESSAGE);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const fieldState = submitError ? "error" : "default";
+  const fieldState = isSaving ? "loading" : submitError ? "error" : "default";
 
   return (
     <div className="flex flex-col gap-(--gap-8) pb-(--padding-10)">
@@ -88,7 +105,7 @@ export function ResponseLog() {
           </div>
 
           <AdminLargeTextField
-            actionDisabled={!trimmed}
+            actionDisabled={isSaving || !selectedActionId}
             actionLabel="기록 저장"
             error={submitError ?? undefined}
             label="작성란"
@@ -103,16 +120,20 @@ export function ResponseLog() {
 
       <section className="flex flex-col gap-(--gap-3)">
         <h2 className="text-heading-xsmall-pc text-text-primary">이력</h2>
-        <div className="flex flex-col gap-(--gap-5)">
-          {history.map((entry, index) => (
-            <Fragment key={entry.id}>
-              {index > 0 ? (
-                <div aria-hidden="true" className="h-px w-full bg-border-default" />
-              ) : null}
-              <ResponseHistoryItem entry={entry} />
-            </Fragment>
-          ))}
-        </div>
+        {history.length === 0 ? (
+          <p className="text-body-xsmall-pc text-text-tertiary">이력이 없습니다</p>
+        ) : (
+          <div className="flex flex-col gap-(--gap-5)">
+            {history.map((entry, index) => (
+              <Fragment key={entry.id}>
+                {index > 0 ? (
+                  <div aria-hidden="true" className="h-px w-full bg-border-default" />
+                ) : null}
+                <ResponseHistoryItem entry={entry} />
+              </Fragment>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

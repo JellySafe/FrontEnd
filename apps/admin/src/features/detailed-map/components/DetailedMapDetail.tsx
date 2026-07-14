@@ -11,7 +11,7 @@ import type { DetailedBeach } from "../types";
 
 export type DetailedMapDetailProps = {
   beach: DetailedBeach;
-  onSelectRecommendation: () => void;
+  onSelectRecommendation: (recommendationId: string) => void;
   onRefresh?: () => void;
 };
 
@@ -75,7 +75,7 @@ export function DetailedMapDetail({
             >
               <button
                 className="flex w-full flex-col gap-(--gap-3) p-(--padding-7) text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--color-border-brand)]"
-                onClick={onSelectRecommendation}
+                onClick={() => onSelectRecommendation(rec.id)}
                 type="button"
               >
                 <div className="flex w-full items-center gap-(--gap-3)">
