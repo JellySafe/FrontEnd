@@ -156,109 +156,112 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
   return (
     <>
       <PublicPageShell
-        contentClassName="flex flex-col gap-(--gap-5) px-(--padding-5) pt-(--padding-8)"
+        contentClassName="px-(--padding-5) pt-(--padding-8)"
         footer={<NavigationBar activeKey="report" items={PUBLIC_NAV_ITEMS} />}
       >
-        {/* 이미지 업로드 */}
-        <div className="flex w-full flex-col gap-(--gap-2)">
-          <span className="text-caption-medium-mobile text-text-tertiary">이미지*</span>
-          <div className="flex items-start gap-(--gap-2)">
-            {images.length < MAX_IMAGE_COUNT ? (
-              <ImageUploadTile onAdd={() => fileInputRef.current?.click()} />
-            ) : null}
-            {images.map((image) => (
-              <ImageUploadTile
-                imageAlt="제보 이미지 미리보기"
-                imageSrc={image.previewUrl}
-                key={image.id}
-                onRemove={() => handleRemoveImage(image.id)}
-              />
-            ))}
+        {/* iOS Safari에서 스크롤 컨테이너에 flex 자식을 직접 두면 스크롤이 막혀 단일 래퍼로 모은다 */}
+        <div className="flex w-full flex-col gap-(--gap-5)">
+          {/* 이미지 업로드 */}
+          <div className="flex w-full flex-col gap-(--gap-2)">
+            <span className="text-caption-medium-mobile text-text-tertiary">이미지*</span>
+            <div className="flex items-start gap-(--gap-2)">
+              {images.length < MAX_IMAGE_COUNT ? (
+                <ImageUploadTile onAdd={() => fileInputRef.current?.click()} />
+              ) : null}
+              {images.map((image) => (
+                <ImageUploadTile
+                  imageAlt="제보 이미지 미리보기"
+                  imageSrc={image.previewUrl}
+                  key={image.id}
+                  onRemove={() => handleRemoveImage(image.id)}
+                />
+              ))}
+            </div>
+            <input
+              accept="image/*"
+              className="hidden"
+              multiple
+              onChange={handleFilesChange}
+              ref={fileInputRef}
+              type="file"
+            />
           </div>
-          <input
-            accept="image/*"
-            className="hidden"
-            multiple
-            onChange={handleFilesChange}
-            ref={fileInputRef}
-            type="file"
-          />
-        </div>
 
-        {/* 발견 위치 */}
-        <SelectField
-          label="발견 위치*"
-          onClick={() => setOpenSheet("address")}
-          placeholder="주소를 선택해주세요"
-          value={location?.name ?? null}
-        />
-
-        {/* 발견 일시 + 지금으로 설정 */}
-        <div className="flex w-full flex-col gap-(--gap-2)">
+          {/* 발견 위치 */}
           <SelectField
-            label="발견 일시*"
-            onClick={() => setOpenSheet("datetime")}
-            placeholder="날짜와 시간을 선택해주세요"
-            value={discoveredAt ? formatReportDateTime(discoveredAt) : null}
+            label="발견 위치*"
+            onClick={() => setOpenSheet("address")}
+            placeholder="주소를 선택해주세요"
+            value={location?.name ?? null}
           />
-          <div className="flex w-full flex-col items-end">
-            <button
-              className="px-(--padding-3) py-(--padding-2) text-caption-medium-mobile text-text-brand underline"
-              onClick={() => setDiscoveredAt(new Date())}
-              type="button"
-            >
-              지금으로 설정
-            </button>
-          </div>
-        </div>
 
-        {/* 제보 유형(단일 선택) */}
-        <div className="flex w-full flex-col gap-(--gap-2)">
-          <span className="text-caption-medium-mobile text-text-tertiary">제보 유형 선택*</span>
-          <div className="flex w-full gap-[var(--gap-1)]">
-            {REPORT_TYPES.map((type) => (
-              <Button
-                className="flex-1"
-                isSelected={reportType === type}
-                key={type}
-                onClick={() => setReportType(type)}
-                platform="mobile"
-                variant="tertiary"
+          {/* 발견 일시 + 지금으로 설정 */}
+          <div className="flex w-full flex-col gap-(--gap-2)">
+            <SelectField
+              label="발견 일시*"
+              onClick={() => setOpenSheet("datetime")}
+              placeholder="날짜와 시간을 선택해주세요"
+              value={discoveredAt ? formatReportDateTime(discoveredAt) : null}
+            />
+            <div className="flex w-full flex-col items-end">
+              <button
+                className="px-(--padding-3) py-(--padding-2) text-caption-medium-mobile text-text-brand underline"
+                onClick={() => setDiscoveredAt(new Date())}
+                type="button"
               >
-                {REPORT_TYPE_LABEL[type]}
-              </Button>
-            ))}
+                지금으로 설정
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* 개인정보 및 위치정보 동의 */}
-        <div className="flex w-full flex-col gap-(--gap-2)">
-          <span className="text-caption-medium-mobile text-text-tertiary">
-            개인정보 및 위치정보 동의*
-          </span>
-          <div className="flex flex-col gap-(--gap-1)">
-            <ConsentRow
-              checked={hasCollectConsent}
-              label="사진 및 위치 정보 수집 이용에 동의합니다 (필수)"
-              onToggle={() => setHasCollectConsent((prev) => !prev)}
-            />
-            <ConsentRow
-              checked={hasReviewConsent}
-              label="제보 내용이 관리자 검수에 활용됨에 동의합니다 (필수)"
-              onToggle={() => setHasReviewConsent((prev) => !prev)}
-            />
+          {/* 제보 유형(단일 선택) */}
+          <div className="flex w-full flex-col gap-(--gap-2)">
+            <span className="text-caption-medium-mobile text-text-tertiary">제보 유형 선택*</span>
+            <div className="flex w-full gap-[var(--gap-1)]">
+              {REPORT_TYPES.map((type) => (
+                <Button
+                  className="flex-1"
+                  isSelected={reportType === type}
+                  key={type}
+                  onClick={() => setReportType(type)}
+                  platform="mobile"
+                  variant="tertiary"
+                >
+                  {REPORT_TYPE_LABEL[type]}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <Button
-          className="w-full"
-          disabled={!canSubmit}
-          onClick={handleSubmit}
-          platform="mobile"
-          variant="primary"
-        >
-          제출
-        </Button>
+          {/* 개인정보 및 위치정보 동의 */}
+          <div className="flex w-full flex-col gap-(--gap-2)">
+            <span className="text-caption-medium-mobile text-text-tertiary">
+              개인정보 및 위치정보 동의*
+            </span>
+            <div className="flex flex-col gap-(--gap-1)">
+              <ConsentRow
+                checked={hasCollectConsent}
+                label="사진 및 위치 정보 수집 이용에 동의합니다 (필수)"
+                onToggle={() => setHasCollectConsent((prev) => !prev)}
+              />
+              <ConsentRow
+                checked={hasReviewConsent}
+                label="제보 내용이 관리자 검수에 활용됨에 동의합니다 (필수)"
+                onToggle={() => setHasReviewConsent((prev) => !prev)}
+              />
+            </div>
+          </div>
+
+          <Button
+            className="w-full"
+            disabled={!canSubmit}
+            onClick={handleSubmit}
+            platform="mobile"
+            variant="primary"
+          >
+            제출
+          </Button>
+        </div>
       </PublicPageShell>
 
       {isCurrentLocationMapOpen ? (
