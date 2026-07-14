@@ -55,7 +55,7 @@ export type TipOffListItem = {
 export type TipOffDetail = TipOffListItem & {
   description: string;
   images: string[];
-  location: MapPoint;
+  location: MapPoint | null;
   locationLabel: string;
 };
 

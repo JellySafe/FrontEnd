@@ -78,12 +78,19 @@ export function TipOffView() {
       listState.updateRowStatus(selectedRow.id, mapAdminStatus(response.reportStatus));
       handleBackToList();
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        clearAdminSession();
-        window.location.assign("/login");
-        return;
+      if (error instanceof ApiError) {
+        if (error.status === 401) {
+          clearAdminSession();
+          window.location.assign("/login");
+          return;
+        }
+        const detail = error.code
+          ? `[${error.code}] ${error.message}`
+          : error.message;
+        setReviewError(`검수 저장에 실패했습니다. ${detail}`);
+      } else {
+        setReviewError("검수 저장에 실패했습니다. 다시 시도해주세요.");
       }
-      setReviewError("검수 저장에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setIsSubmitting(false);
     }

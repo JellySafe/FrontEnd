@@ -43,32 +43,40 @@ function TipOffMapPin({ risk }: { risk: RiskLevel }) {
   );
 }
 
-// 제보 위치 지도. 제보 좌표를 중심으로 tip-off 핀과 해변명을 표시한다.
+// 제보 위치 지도. 좌표가 있을 때만 지도를 렌더링한다.
 export function TipOffLocation({ detail }: TipOffLocationProps) {
+  const pinLabel = detail.beach || detail.locationLabel;
+
   return (
     <section className="flex flex-col gap-(--gap-3)">
       <h3 className="text-heading-xsmall-pc text-text-primary">위치</h3>
-      <div className="relative h-[385px] w-full">
-        <KakaoMapCanvas center={detail.location} level={PIN_FOCUS_LEVEL}>
-          {/* CSS translate로 맞추면 줌 시 픽셀 오프셋이 위경도로 커져 핀이 밀림. 앵커로 tip을 좌표에 고정 */}
-          <CustomOverlayMap position={detail.location} xAnchor={0.5} yAnchor={1}>
-            <div className="relative h-4 w-4">
-              <TipOffMapPin risk={detail.risk} />
-              <p className="absolute top-full left-1/2 -translate-x-1/2 text-caption-medium-pc whitespace-nowrap text-text-primary">
-                {detail.beach}
-              </p>
-            </div>
-          </CustomOverlayMap>
-        </KakaoMapCanvas>
-        <div className="pointer-events-none absolute right-[30px] bottom-[30px] z-10 flex items-center gap-(--gap-3) px-(--padding-3) py-(--padding-2)">
-          {LEGEND_ORDER.map((risk) => (
-            <span className="flex items-center gap-(--gap-2)" key={risk}>
-              <span className={["size-[6px] rounded-full", RISK_DOT_CLASS[risk]].join(" ")} />
-              <span className="text-caption-small-pc text-text-secondary">{RISK_LABEL[risk]}</span>
-            </span>
-          ))}
+      {!detail.location ? (
+        <div className="flex h-[385px] w-full items-center justify-center rounded-lg border border-border-default bg-bg-surface">
+          좌표 정보가 없습니다. (백엔드에서 lat/lng 제공 필요)
         </div>
-      </div>
+      ) : (
+        <div className="relative h-[385px] w-full">
+          <KakaoMapCanvas center={detail.location} level={PIN_FOCUS_LEVEL}>
+            {/* CSS translate로 맞추면 줌 시 픽셀 오프셋이 위경도로 커져 핀이 밀림. 앵커로 tip을 좌표에 고정 */}
+            <CustomOverlayMap position={detail.location} xAnchor={0.5} yAnchor={1}>
+              <div className="relative h-4 w-4">
+                <TipOffMapPin risk={detail.risk} />
+                <p className="absolute top-full left-1/2 -translate-x-1/2 text-caption-medium-pc whitespace-nowrap text-text-primary">
+                  {pinLabel}
+                </p>
+              </div>
+            </CustomOverlayMap>
+          </KakaoMapCanvas>
+          <div className="pointer-events-none absolute right-[30px] bottom-[30px] z-10 flex items-center gap-(--gap-3) px-(--padding-3) py-(--padding-2)">
+            {LEGEND_ORDER.map((risk) => (
+              <span className="flex items-center gap-(--gap-2)" key={risk}>
+                <span className={["size-[6px] rounded-full", RISK_DOT_CLASS[risk]].join(" ")} />
+                <span className="text-caption-small-pc text-text-secondary">{RISK_LABEL[risk]}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
