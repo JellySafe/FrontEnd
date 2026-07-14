@@ -160,7 +160,7 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
         footer={<NavigationBar activeKey="report" items={PUBLIC_NAV_ITEMS} />}
       >
         {/* iOS Safari에서 스크롤 컨테이너에 flex 자식을 직접 두면 스크롤이 막혀 단일 래퍼로 모은다 */}
-        <div className="flex w-full flex-col gap-(--gap-5)">
+        <div className="flex w-full shrink-0 flex-col gap-(--gap-5)">
           {/* 이미지 업로드 */}
           <div className="flex w-full flex-col gap-(--gap-2)">
             <span className="text-caption-medium-mobile text-text-tertiary">이미지*</span>

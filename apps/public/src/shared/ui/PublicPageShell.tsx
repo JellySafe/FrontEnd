@@ -37,6 +37,8 @@ export function PublicPageShell({
 }: PublicPageShellProps) {
   const hasFooter = footer != null || footerOverlay != null;
   const contentScrollRef = useScrollIndicator<HTMLDivElement>();
+  const footerClearanceClass =
+    "h-[calc(var(--padding-10)+var(--padding-8)+env(safe-area-inset-bottom))] shrink-0";
 
   return (
     <div
@@ -59,7 +61,7 @@ export function PublicPageShell({
                 "overflow-y-auto overscroll-y-contain",
               ].join(" ")
             : "overflow-hidden",
-          hasFooter
+          hasFooter && !scrollable
             ? "pb-[calc(var(--padding-10)+var(--padding-8)+env(safe-area-inset-bottom))]"
             : "",
           contentClassName ?? "px-(--padding-5) pt-(--padding-8)",
@@ -69,6 +71,9 @@ export function PublicPageShell({
         ref={scrollable && showScrollbar ? contentScrollRef : undefined}
       >
         {children}
+        {hasFooter && scrollable ? (
+          <div aria-hidden="true" className={footerClearanceClass} />
+        ) : null}
       </div>
 
       {hasFooter ? (
