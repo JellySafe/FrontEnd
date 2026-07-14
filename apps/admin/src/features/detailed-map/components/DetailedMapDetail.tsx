@@ -12,10 +12,15 @@ import type { DetailedBeach } from "../types";
 export type DetailedMapDetailProps = {
   beach: DetailedBeach;
   onSelectRecommendation: () => void;
+  onRefresh?: () => void;
 };
 
 // 상세 분석 뷰: 메타 정보 + 시간별 위험도 예측 차트 + 시간별 위험 원인 + 대응 권고.
-export function DetailedMapDetail({ beach, onSelectRecommendation }: DetailedMapDetailProps) {
+export function DetailedMapDetail({
+  beach,
+  onSelectRecommendation,
+  onRefresh,
+}: DetailedMapDetailProps) {
   const [causeTab, setCauseTab] = useState<TimeFrame>("current");
   const frame = beach.causeByFrame[causeTab];
 
@@ -33,7 +38,15 @@ export function DetailedMapDetail({ beach, onSelectRecommendation }: DetailedMap
           <span>데이터 수집</span>
           <span>{beach.collectedAt}</span>
         </span>
-        <RefreshIcon className="size-[20px] text-icon-tertiary" />
+        <button
+          aria-label="새로고침"
+          className="text-icon-tertiary disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={!onRefresh}
+          onClick={onRefresh}
+          type="button"
+        >
+          <RefreshIcon className="size-[20px]" />
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-(--gap-7) lg:grid-cols-2">

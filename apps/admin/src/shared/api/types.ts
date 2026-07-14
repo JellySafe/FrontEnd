@@ -60,3 +60,27 @@ export type LatestRiskResponse = {
   minLevelApplied: boolean;
   generatedAt: string;
 };
+
+export type RiskFactorTagResponse = {
+  code: string;
+  name: string;
+  detail: string;
+  delta: number;
+  sourceReportId: number | null;
+};
+
+export type RiskCardResponse = {
+  horizon: BackendHorizon;
+  riskLevel: BackendRiskLevel;
+  riskScore: number;
+  confidence: DataConfidence;
+  generatedAt: string;
+  factors: RiskFactorTagResponse[];
+};
+
+export type AdminBeachRiskResponse = {
+  beachId: number;
+  beachName: string;
+  region: string;
+  cards: RiskCardResponse[];
+};

@@ -64,9 +64,8 @@ export function DashboardView() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [map, setMap] = useState<kakao.maps.Map | null>(null);
 
-  const { beaches, stats, timestamp, isLoading, isError, horizon } = useDashboardData(
-    appliedFilter.time,
-  );
+  const { beaches, stats, timestamp, isLoading, isRefreshing, isError, refresh, horizon } =
+    useDashboardData(appliedFilter.time);
 
   const listScrollRef = useRef<HTMLDivElement | null>(null);
   const listItemRefs = useRef<Map<string, HTMLLIElement>>(new Map());
@@ -150,7 +149,13 @@ export function DashboardView() {
       {isLoading && stats.length === 0 ? (
         <DashboardStatsSkeleton />
       ) : (
-        <DashboardStats stats={stats} timestamp={timestamp} title="제주도 해파리 현황" />
+        <DashboardStats
+          isRefreshing={isRefreshing}
+          onRefresh={refresh}
+          stats={stats}
+          timestamp={timestamp}
+          title="제주도 해파리 현황"
+        />
       )}
 
       <section className="flex min-h-0 flex-1 flex-col gap-(--gap-4)">
