@@ -23,7 +23,8 @@ export type PublicPageShellProps = {
  * Public 모바일 웹앱 페이지 셸.
  * 뷰포트 가로를 채우되 max-w-[430px]에서 컷 + 중앙 정렬.
  * 하단 footer도 동일 폭으로 맞춤.
- * 본문이 스크롤 컨테이너(h-dvh + overflow-y-auto)라 document 스크롤에 의존하지 않음.
+ * iOS Safari 중첩 스크롤 잠금을 피하려고 셸을 fixed inset-0(비주얼 뷰포트)에 고정하고,
+ * 내부 flex-1 min-h-0 영역만 단일 스크롤 컨테이너로 둔다. document는 스크롤하지 않음.
  */
 export function PublicPageShell({
   children,
@@ -40,7 +41,9 @@ export function PublicPageShell({
   return (
     <div
       className={[
-        "relative flex h-dvh flex-col overflow-hidden bg-bg-default",
+        // fixed + inset: 비주얼 뷰포트 높이에 고정해 iOS 툴바 변동에도 스크롤 위임이 안정적.
+        // inset-x-0 + mx-auto로 max-w 컬럼을 중앙 정렬(fixed에서는 left-1/2 대신 이 조합을 사용).
+        "fixed inset-0 flex flex-col overflow-hidden bg-bg-default",
         PUBLIC_APP_MAX_WIDTH_CLASS,
         className,
       ]
