@@ -8,12 +8,16 @@ import type {
 } from "@/shared/api/types";
 import {
   confidenceToPercent,
+  formatDateTime,
   formatGeneratedAt,
   formatSignedDelta,
+  horizonToTimeFrame,
   toRiskLevel,
 } from "@/shared/risk/mappers";
-import { RISK_LABEL } from "@/shared/risk/types";
-import type { BeachSummary, DashboardStat } from "../types";
+import { RISK_LABEL, TIME_FRAME_LABEL, type HourlyRisk, type TimeFrame } from "@/shared/risk/types";
+import type { BeachDetail, BeachSummary, DashboardStat } from "../types";
+
+const DETAIL_HORIZON_ORDER: TimeFrame[] = ["current", "after24h", "after72h"];
 
 export function toDashboardStats(summary: DashboardSummaryResponse): {
   stats: DashboardStat[];
@@ -125,4 +129,40 @@ export function enrichBeachSummaries(
       : "정보 없음";
     return toBeachSummary(item, causeSummary);
   });
+}
+
+export function toBeachDetail(
+  summary: BeachSummary,
+  risk: AdminBeachRiskResponse,
+): BeachDetail {
+  const hourlyByTimeFrame = new Map<TimeFrame, HourlyRisk>();
+
+  for (const card of risk.cards) {
+    const timeFrame = horizonToTimeFrame(card.horizon);
+    if (!timeFrame) continue;
+
+    hourlyByTimeFrame.set(timeFrame, {
+      timeFrame,
+      label: TIME_FRAME_LABEL[timeFrame],
+      score: card.riskScore,
+      confidence: confidenceToPercent(card.confidence),
+      risk: toRiskLevel(card.riskLevel),
+    });
+  }
+
+  const hourly = DETAIL_HORIZON_ORDER.flatMap((timeFrame) => {
+    const item = hourlyByTimeFrame.get(timeFrame);
+    return item ? [item] : [];
+  });
+
+  const nowCard =
+    risk.cards.find((card) => card.horizon === "now") ?? risk.cards[0];
+  const generatedAt = nowCard?.generatedAt ?? null;
+
+  return {
+    ...summary,
+    createdAt: formatDateTime(generatedAt),
+    collectedAt: formatDateTime(generatedAt),
+    hourly,
+  };
 }

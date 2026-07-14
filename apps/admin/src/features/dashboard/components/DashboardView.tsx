@@ -1,11 +1,10 @@
 "use client";
 
-import { Skeleton } from "@jellysafe/design-system";
+import { Button, Skeleton } from "@jellysafe/design-system";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JEJU_CENTER, JEJU_OVERVIEW_LEVEL } from "@/shared/map/constants";
 import { KakaoMapCanvas } from "@/shared/map/KakaoMapCanvas";
 import { useDashboardData } from "../api/useDashboardData";
-import { getBeachDetail } from "../mocks/dashboard.mock";
 import { EMPTY_FILTER, countActiveFilters } from "../types";
 import type {
   BeachSummary,
@@ -64,8 +63,17 @@ export function DashboardView() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [map, setMap] = useState<kakao.maps.Map | null>(null);
 
-  const { beaches, stats, timestamp, isLoading, isRefreshing, isError, refresh, horizon } =
-    useDashboardData(appliedFilter.time);
+  const {
+    beaches,
+    stats,
+    timestamp,
+    isLoading,
+    isRefreshing,
+    isError,
+    refresh,
+    horizon,
+    getBeachDetail,
+  } = useDashboardData(appliedFilter.time);
 
   const listScrollRef = useRef<HTMLDivElement | null>(null);
   const listItemRefs = useRef<Map<string, HTMLLIElement>>(new Map());
@@ -209,8 +217,15 @@ export function DashboardView() {
                   onToggleRisk={toggleRisk}
                   previewCount={previewCount}
                 />
-                {detail ? (
+                {selectedBeach && detail ? (
                   <DashboardDetailPanel detail={detail} onClose={() => setSelectedId(null)} />
+                ) : selectedBeach ? (
+                  <div className="animate-panel-slide-up absolute top-[16px] bottom-[16px] left-[16px] z-40 flex w-[400px] flex-col items-center justify-center gap-(--gap-4) rounded-lg bg-bg-default p-(--padding-7) shadow-[0_0_4px_var(--color-alpha-black-5)]">
+                    <p className="text-body-xsmall-pc text-text-tertiary">위험도 상세를 불러오지 못했습니다</p>
+                    <Button onClick={() => setSelectedId(null)} platform="pc" size="medium" type="button" variant="secondary">
+                      닫기
+                    </Button>
+                  </div>
                 ) : null}
               </div>
             </>

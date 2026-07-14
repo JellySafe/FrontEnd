@@ -6,9 +6,9 @@ import { ApiError } from "@/shared/api/http-client";
 import type { AdminBeachRiskResponse, BackendHorizon } from "@/shared/api/types";
 import { timeFrameToHorizon } from "@/shared/risk/mappers";
 import type { TimeFrame } from "@/shared/risk/types";
-import type { BeachSummary, DashboardStat } from "../types";
+import type { BeachDetail, BeachSummary, DashboardStat } from "../types";
 import { getAdminBeachRisk, getDashboardSummary, getLatestRisks } from "./dashboard-api";
-import { enrichBeachSummaries, toDashboardStats } from "./mappers";
+import { enrichBeachSummaries, toBeachDetail, toDashboardStats } from "./mappers";
 
 function handleUnauthorized(error: unknown): boolean {
   if (error instanceof ApiError && error.status === 401) {
@@ -151,6 +151,12 @@ export function useDashboardData(timeFrame: TimeFrame | null) {
 
   const isLoading = isSummaryLoading || isRisksLoading;
 
+  const getBeachDetail = useCallback((beach: BeachSummary): BeachDetail | null => {
+    const risk = riskCacheRef.current.get(Number(beach.id));
+    if (!risk) return null;
+    return toBeachDetail(beach, risk);
+  }, []);
+
   return {
     beaches,
     stats,
@@ -160,5 +166,6 @@ export function useDashboardData(timeFrame: TimeFrame | null) {
     isError,
     refresh,
     horizon: horizon as BackendHorizon,
+    getBeachDetail,
   };
 }
