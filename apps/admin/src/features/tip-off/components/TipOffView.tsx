@@ -11,6 +11,7 @@ import { getTipOffDetail } from "../mocks/tip-off.mock";
 import { useTipOffListState } from "../hooks/useTipOffListState";
 import {
   SORT_LABEL,
+  canReviewReport,
   type ImagePreviewState,
   type RejectReason,
   type ReviewDecision,
@@ -38,6 +39,7 @@ export function TipOffView() {
   );
 
   const detail = selectedRow ? getTipOffDetail(selectedRow) : null;
+  const isReviewLocked = selectedRow ? !canReviewReport(selectedRow.reportStatus) : true;
 
   const previewImages = useMemo(() => {
     if (!imagePreview) return [];
@@ -65,7 +67,7 @@ export function TipOffView() {
   }, [listState.setSelectedId]);
 
   const handleSubmitReview = async () => {
-    if (!selectedRow || !reviewDecision || isSubmitting) return;
+    if (!selectedRow || !reviewDecision || isSubmitting || isReviewLocked) return;
 
     setIsSubmitting(true);
     setReviewError(null);
@@ -75,13 +77,23 @@ export function TipOffView() {
         Number(selectedRow.id),
         toReviewRequest(reviewDecision, rejectReason),
       );
-      listState.updateRowStatus(selectedRow.id, mapAdminStatus(response.reportStatus));
+      listState.updateRowStatus(
+        selectedRow.id,
+        mapAdminStatus(response.reportStatus),
+        response.reportStatus,
+      );
       handleBackToList();
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 401) {
           clearAdminSession();
           window.location.assign("/login");
+          return;
+        }
+        if (error.code === "REPORT_INVALID_TRANSITION") {
+          setReviewError(
+            "이미 확정된 검수 결과라 변경할 수 없습니다. 관리자 상태가「-」(미검수)인 제보를 선택해주세요.",
+          );
           return;
         }
         const detail = error.code
@@ -109,6 +121,7 @@ export function TipOffView() {
         <TipOffDetailHeader onBack={handleBackToList} />
         <TipOffDetailPanel
           detail={detail}
+          isReviewLocked={isReviewLocked}
           onImageClick={(index) =>
             setImagePreview({ tipOffId: detail.id, index })
           }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { clearAdminSession } from "@/features/admin-auth/model/admin-session";
 import { getLatestRisks } from "@/features/dashboard/api/dashboard-api";
 import { ApiError } from "@/shared/api/http-client";
+import type { BackendReportStatus } from "@/shared/api/types";
 import { buildRiskByBeachId, toTipOffListItem } from "../api/mappers";
 import { getAdminReports } from "../api/reports-api";
 import {
@@ -204,9 +205,17 @@ export function useTipOffListState() {
     setSelectedId(null);
   };
 
-  const updateRowStatus = (id: string, adminStatus: AdminStatus) => {
+  const updateRowStatus = (
+    id: string,
+    adminStatus: AdminStatus,
+    reportStatus?: BackendReportStatus,
+  ) => {
     setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, adminStatus } : row)),
+      prev.map((row) =>
+        row.id === id
+          ? { ...row, adminStatus, ...(reportStatus ? { reportStatus } : {}) }
+          : row,
+      ),
     );
   };
 

@@ -1,4 +1,5 @@
 import type { MapPoint } from "@/features/dashboard/types";
+import type { BackendReportStatus } from "@/shared/api/types";
 import type { RiskLevel } from "@/shared/risk/types";
 
 export type TipOffScreen = "list" | "detail";
@@ -48,6 +49,7 @@ export type TipOffListItem = {
   aiVerdict: AiVerdict;
   confidence: number;
   adminStatus: AdminStatus;
+  reportStatus: BackendReportStatus;
   thumbnailState: ThumbnailState;
   thumbnailSrc?: string;
 };
@@ -104,6 +106,11 @@ export const REVIEW_DECISION_LABEL: Record<Exclude<ReviewDecision, null>, string
   pending: "보류",
   rejected: "반려",
 };
+
+export function canReviewReport(status: BackendReportStatus): boolean {
+  // 검수 가능: AI 완료 대기, 보류(재판단). 확정/파이프라인 전/반영 완료는 잠금
+  return status === "ai_done" || status === "hold";
+}
 
 export function countActiveTipOffFilters(filter: TipOffFilterState): number {
   return (

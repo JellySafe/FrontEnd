@@ -137,6 +137,7 @@ export function toTipOffListItem(
     aiVerdict: item.aiResult ?? "unknown",
     confidence: Math.round((item.aiConfidence ?? 0) * 100),
     adminStatus: mapAdminStatus(item.status),
+    reportStatus: item.status,
     thumbnailState: thumbnail.state,
     thumbnailSrc: thumbnail.src,
   };

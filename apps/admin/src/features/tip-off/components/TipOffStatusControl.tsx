@@ -23,6 +23,7 @@ export type TipOffStatusControlProps = {
   rejectReason: RejectReason;
   onReviewDecisionChange: (decision: ReviewDecision) => void;
   onRejectReasonChange: (reason: RejectReason) => void;
+  disabled?: boolean;
 };
 
 // 검수 처리 단일 선택 chips. 반려 시 반려 사유 chips를 노출한다.
@@ -31,6 +32,7 @@ export function TipOffStatusControl({
   rejectReason,
   onReviewDecisionChange,
   onRejectReasonChange,
+  disabled = false,
 }: TipOffStatusControlProps) {
   return (
     <section className="flex flex-col gap-(--gap-8)">
@@ -45,6 +47,7 @@ export function TipOffStatusControl({
           {REVIEW_OPTIONS.map((decision) => (
             <Chip
               key={decision}
+              disabled={disabled}
               onSelectedChange={() =>
                 onReviewDecisionChange(reviewDecision === decision ? null : decision)
               }
@@ -68,6 +71,7 @@ export function TipOffStatusControl({
             {REJECT_REASON_OPTIONS.map((reason) => (
               <Chip
                 key={reason}
+                disabled={disabled}
                 onSelectedChange={() =>
                   onRejectReasonChange(rejectReason === reason ? null : reason)
                 }
