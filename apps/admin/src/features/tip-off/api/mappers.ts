@@ -18,16 +18,30 @@ export function buildRiskByBeachId(items: LatestRiskResponse[]): Map<number, Ris
 }
 
 export function resolveMediaUrl(url: string | null): { state: ThumbnailState; src?: string } {
-  if (!url) {
-    return { state: "empty" };
+  if (!url) return { state: "empty" };
+
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    try {
+      const parsed = new URL(url);
+      // demo.jellysafe.local 등 플레이스홀더 → /uploads/... same-origin
+      if (
+        parsed.hostname === "demo.jellysafe.local" ||
+        parsed.pathname.startsWith("/uploads/")
+      ) {
+        return { state: "loaded", src: parsed.pathname };
+      }
+      return { state: "loaded", src: url };
+    } catch {
+      return { state: "empty" };
+    }
   }
-  if (url.startsWith("http")) {
+
+  if (url.startsWith("/")) {
+    // same-origin (rewrites). Do NOT prefix NEXT_PUBLIC_API_URL — that creates
+    // absolute host requiring remotePatterns and bypasses next rewrites.
     return { state: "loaded", src: url };
   }
-  if (url.startsWith("/")) {
-    const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "";
-    return { state: "loaded", src: `${base}${url}` };
-  }
+
   return { state: "loaded", src: url };
 }
 
