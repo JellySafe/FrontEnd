@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from "@jellysafe/design-system";
+import type { BackendReportStatus } from "@/shared/api/types";
 import {
   AI_VERDICT_LABEL,
-  REPORT_STATUS_LABEL,
   REPORT_TYPE_LABEL,
   type RejectReason,
   type ReviewDecision,
@@ -32,6 +32,16 @@ function canSubmitReview(decision: ReviewDecision, reason: RejectReason): boolea
   return true;
 }
 
+function getReviewLockMessage(status: BackendReportStatus): string {
+  if (status === "received" || status === "ai_processing") {
+    return "AI 처리가 끝난 뒤에 검수할 수 있습니다.";
+  }
+  if (status === "verified" || status === "rejected" || status === "reflected") {
+    return "이미 확정된 검수 결과입니다. 상태 변경은 불가합니다.";
+  }
+  return "현재 상태에서는 검수할 수 없습니다.";
+}
+
 export function TipOffDetailPanel({
   detail,
   reviewDecision,
@@ -44,10 +54,6 @@ export function TipOffDetailPanel({
   submitError = null,
   isReviewLocked = false,
 }: TipOffDetailPanelProps) {
-  const isFinalizedStatus =
-    detail.reportStatus === "verified" ||
-    detail.reportStatus === "rejected" ||
-    detail.reportStatus === "reflected";
   const isSubmitEnabled =
     !isReviewLocked && canSubmitReview(reviewDecision, rejectReason) && !isSubmitting;
 
@@ -79,8 +85,7 @@ export function TipOffDetailPanel({
 
       {isReviewLocked ? (
         <p className="text-caption-small-pc text-text-tertiary">
-          AI 처리가 끝난 뒤에 검수할 수 있습니다. (현재:{" "}
-          {REPORT_STATUS_LABEL[detail.reportStatus]})
+          {getReviewLockMessage(detail.reportStatus)}
         </p>
       ) : null}
 
@@ -91,12 +96,6 @@ export function TipOffDetailPanel({
         rejectReason={rejectReason}
         reviewDecision={reviewDecision}
       />
-
-      {!isReviewLocked && isFinalizedStatus ? (
-        <p className="text-caption-small-pc text-text-tertiary">
-          주의: 백엔드가 확정 상태 재변경을 아직 막으면 저장이 실패할 수 있습니다.
-        </p>
-      ) : null}
 
       {submitError ? (
         <p className="text-caption-small-pc text-text-error">{submitError}</p>

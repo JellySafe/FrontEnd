@@ -118,9 +118,7 @@ export const REVIEW_DECISION_LABEL: Record<Exclude<ReviewDecision, null>, string
 };
 
 export function canReviewReport(status: BackendReportStatus): boolean {
-  // AI 접수/처리 중만 잠금. 확정(verified 등)은 UI에서 열어 두고 백엔드 전이 허용 시 동작
-  // TODO: 백엔드가 verified|rejected|reflected 재변경 전이를 허용하면 확정 건도 저장 가능
-  return status !== "received" && status !== "ai_processing";
+  return status === "ai_done" || status === "hold";
 }
 
 export function countActiveTipOffFilters(filter: TipOffFilterState): number {
