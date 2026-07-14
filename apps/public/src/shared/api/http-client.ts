@@ -17,12 +17,17 @@ export class ApiError extends Error {
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // path(/api/... )를 base URL과 결합. 슬래시 중복/누락을 정규화.
+// 브라우저에서는 same-origin 상대 경로를 반환해 next.config rewrites 프록시를 타게 한다
+// (백엔드가 실제 응답에 CORS 헤더를 누락해 직접 호출이 차단되기 때문).
 function buildUrl(path: string): string {
+  const suffix = path.startsWith("/") ? path : `/${path}`;
+  if (typeof window !== "undefined") {
+    return suffix;
+  }
   if (!BASE_URL) {
     throw new ApiError("NEXT_PUBLIC_API_URL이 설정되지 않았습니다.", 0, path);
   }
   const base = BASE_URL.replace(/\/+$/, "");
-  const suffix = path.startsWith("/") ? path : `/${path}`;
   return `${base}${suffix}`;
 }
 
