@@ -201,3 +201,46 @@ export type ReviewReportResponse = {
   reportStatus: BackendReportStatus;
   reflectedRisk: boolean;
 };
+
+export type NotificationTargetType = "admin" | "operator" | "public";
+export type NotificationEventType = "level_up" | "toxic_report" | "sting_report";
+
+export type AdminNotificationListItemResponse = {
+  notificationId: number;
+  targetType: NotificationTargetType;
+  beachId: number;
+  beachName: string | null;
+  riskLevel: BackendRiskLevel | null;
+  eventType: NotificationEventType;
+  title: string | null;
+  message: string;
+  createdAt: string;
+  readAt: string | null;
+};
+
+export type SendNotificationRequest = {
+  targetType: NotificationTargetType;
+  beachId: number;
+  eventType?: NotificationEventType;
+  riskLevel?: BackendRiskLevel;
+  title?: string;
+  message?: string;
+};
+
+export type SendNotificationResponse = {
+  created: boolean;
+  notificationId: number | null;
+  recipientCount?: number;
+};
+
+export type AdminBeachItemResponse = {
+  beachId: number;
+  name: string;
+  region: string;
+  lat: number;
+  lng: number;
+  facingDirection?: number | null;
+  priority?: number;
+  vulnerabilityScore?: number;
+  isActive?: boolean;
+};

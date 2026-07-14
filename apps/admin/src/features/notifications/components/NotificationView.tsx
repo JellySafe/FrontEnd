@@ -1,12 +1,21 @@
 "use client";
 
 import { Chip, Tabs, Toast } from "@jellysafe/design-system";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { BEACHES } from "@/features/dashboard/mocks/dashboard.mock";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { clearAdminSession } from "@/features/admin-auth/model/admin-session";
+import { getAdminBeaches } from "@/features/beaches/api/beaches-api";
+import {
+  getAdminBeachRisk,
+  getLatestRisks,
+} from "@/features/dashboard/api/dashboard-api";
+import { ApiError } from "@/shared/api/http-client";
+import type { BackendRiskLevel } from "@/shared/api/types";
 import { useScrollIndicator } from "@/shared/hooks/useScrollIndicator";
+import { toRiskLevel } from "@/shared/risk/mappers";
 import { AdminLargeTextField } from "@/shared/ui/AdminLargeTextField";
 import { SearchIcon } from "@/shared/ui/icons";
-import { INBOX_NOTIFICATIONS } from "../mocks/notifications.mock";
+import { getAdminNotifications, sendNotification } from "../api/notifications-api";
+import { buildBackendRiskByBeachId, toNotificationItem } from "../api/mappers";
 import {
   RECIPIENT_OPTIONS,
   type NotificationItem,
@@ -24,22 +33,53 @@ const COPY_TOAST_MESSAGE = "해당 알림 내용을 복사 했습니다";
 const COPY_TOAST_DURATION_MS = 2500;
 const COPY_TOAST_EXIT_MS = 600;
 
-function formatCreatedAt(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
+type BeachOption = {
+  id: string;
+  name: string;
+  region: string;
+};
 
-  return `${year}.${month}.${day} ${hours}:${minutes}`;
+function handleUnauthorized(error: unknown): boolean {
+  if (error instanceof ApiError && error.status === 401) {
+    clearAdminSession();
+    window.location.assign("/login");
+    return true;
+  }
+  return false;
+}
+
+function formatApiErrorDetail(error: unknown): string | null {
+  if (error instanceof ApiError && error.message) {
+    return error.message;
+  }
+  return null;
+}
+
+async function resolveBackendRiskLevel(
+  beachId: number,
+  riskByBeachId: Map<number, BackendRiskLevel>,
+): Promise<BackendRiskLevel> {
+  const cached = riskByBeachId.get(beachId);
+  if (cached) return cached;
+
+  const beachRisk = await getAdminBeachRisk(beachId);
+  const nowCard = beachRisk.cards.find((card) => card.horizon === "now");
+  return nowCard?.riskLevel ?? "safe";
 }
 
 export function NotificationView() {
   const [activeTab, setActiveTab] = useState<NotificationTab>("compose");
-  const [hasUnread, setHasUnread] = useState(true);
+  const [hasUnread, setHasUnread] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
-  const [inbox, setInbox] = useState<NotificationItem[]>(INBOX_NOTIFICATIONS);
+  const [inbox, setInbox] = useState<NotificationItem[]>([]);
+  const [isInboxLoading, setIsInboxLoading] = useState(true);
+  const [isInboxError, setIsInboxError] = useState(false);
+  const [beaches, setBeaches] = useState<BeachOption[]>([]);
+  const [riskByBeachId, setRiskByBeachId] = useState<Map<number, BackendRiskLevel>>(
+    () => new Map(),
+  );
   const [recipients, setRecipients] = useState<NotificationRecipient[]>([]);
   const [selectedBeachId, setSelectedBeachId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -57,20 +97,100 @@ export function NotificationView() {
   );
   const locationListId = useId();
 
+  const loadInbox = useCallback(async () => {
+    const response = await getAdminNotifications({ page: 1, size: 50 });
+    const items = response.items.map(toNotificationItem);
+    setInbox(items);
+    setHasUnread(
+      response.items.some((item) => item.readAt === null) ||
+        items.some((item) => item.isUnread),
+    );
+    return items;
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setIsInboxLoading(true);
+    setIsInboxError(false);
+
+    loadInbox()
+      .catch((error) => {
+        if (cancelled) return;
+        if (handleUnauthorized(error)) return;
+        setIsInboxError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsInboxLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadInbox]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getAdminBeaches()
+      .then((items) => {
+        if (cancelled) return;
+        setBeaches(
+          items.map((beach) => ({
+            id: String(beach.beachId),
+            name: beach.name,
+            region: beach.region,
+          })),
+        );
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        handleUnauthorized(error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getLatestRisks("now")
+      .then((items) => {
+        if (cancelled) return;
+        setRiskByBeachId(buildBackendRiskByBeachId(items));
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        handleUnauthorized(error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const selectedBeach = useMemo(
-    () => BEACHES.find((beach) => beach.id === selectedBeachId) ?? null,
-    [selectedBeachId],
+    () => beaches.find((beach) => beach.id === selectedBeachId) ?? null,
+    [beaches, selectedBeachId],
   );
+
+  const selectedBeachRisk = useMemo(() => {
+    if (!selectedBeachId) return undefined;
+    const backendRisk = riskByBeachId.get(Number(selectedBeachId));
+    return backendRisk ? toRiskLevel(backendRisk) : undefined;
+  }, [riskByBeachId, selectedBeachId]);
 
   const filteredBeaches = useMemo(() => {
     const query = locationQuery.trim().toLowerCase();
-    if (!query) return BEACHES;
-    return BEACHES.filter(
+    if (!query) return beaches;
+    return beaches.filter(
       (beach) =>
         beach.name.toLowerCase().includes(query) ||
-        beach.address.toLowerCase().includes(query),
+        beach.region.toLowerCase().includes(query),
     );
-  }, [locationQuery]);
+  }, [beaches, locationQuery]);
 
   const trimmedTitle = title.trim();
   const trimmedBody = body.trim();
@@ -78,7 +198,8 @@ export function NotificationView() {
     recipients.length >= 1 &&
     selectedBeach !== null &&
     trimmedTitle.length > 0 &&
-    trimmedBody.length > 0;
+    trimmedBody.length > 0 &&
+    !isSending;
 
   useEffect(() => {
     if (!isLocationOpen) return;
@@ -130,26 +251,58 @@ export function NotificationView() {
     if (generateError) setGenerateError(null);
   };
 
-  const handleGenerate = () => {
-    if (!canGenerate || !selectedBeach || isGenerated) return;
+  const handleGenerate = async () => {
+    if (!canGenerate || !selectedBeachId || isGenerated || isSending) return;
+
+    setIsSending(true);
+    setGenerateError(null);
 
     try {
-      const newItem: NotificationItem = {
-        id: `notif-${Date.now()}`,
-        locationLabel: selectedBeach.name,
-        title: trimmedTitle,
-        body: trimmedBody,
-        createdAt: formatCreatedAt(new Date()),
-        risk: selectedBeach.risk,
-      };
+      const beachId = Number(selectedBeachId);
+      const riskLevel = await resolveBackendRiskLevel(beachId, riskByBeachId);
 
-      setInbox((prev) => [newItem, ...prev]);
+      const results = await Promise.allSettled(
+        recipients.map((recipient) =>
+          sendNotification({
+            targetType: recipient,
+            beachId,
+            title: trimmedTitle,
+            message: trimmedBody,
+            eventType: "level_up",
+            riskLevel,
+          }),
+        ),
+      );
+
+      const failures = results.filter((result) => result.status === "rejected");
+      if (failures.length > 0) {
+        const firstFailure = failures[0];
+        if (firstFailure.status === "rejected" && handleUnauthorized(firstFailure.reason)) {
+          return;
+        }
+
+        const detail =
+          firstFailure.status === "rejected"
+            ? formatApiErrorDetail(firstFailure.reason)
+            : null;
+        setGenerateError(
+          detail ? `${GENERATE_ERROR_MESSAGE} (${detail})` : GENERATE_ERROR_MESSAGE,
+        );
+        return;
+      }
+
+      await loadInbox();
       setIsGenerated(true);
       setHasUnread(true);
-      setGenerateError(null);
-    } catch {
-      // API 연동 후 실패 시 폴백 메시지
-      setGenerateError(GENERATE_ERROR_MESSAGE);
+    } catch (error) {
+      if (handleUnauthorized(error)) return;
+
+      const detail = formatApiErrorDetail(error);
+      setGenerateError(
+        detail ? `${GENERATE_ERROR_MESSAGE} (${detail})` : GENERATE_ERROR_MESSAGE,
+      );
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -231,6 +384,7 @@ export function NotificationView() {
               copyActive={isGenerated}
               locationLabel={selectedBeach?.name ?? ""}
               onCopy={handleCopyPreview}
+              risk={selectedBeachRisk}
               title={title}
               variant="preview"
             />
@@ -242,6 +396,7 @@ export function NotificationView() {
               {RECIPIENT_OPTIONS.map((option) => (
                 <Chip
                   key={option.value}
+                  disabled={isSending}
                   onSelectedChange={() => toggleRecipient(option.value)}
                   selected={recipients.includes(option.value)}
                 >
@@ -259,6 +414,7 @@ export function NotificationView() {
                 aria-expanded={isLocationOpen}
                 aria-haspopup="listbox"
                 className="flex w-full items-center justify-between rounded-lg border border-border-default bg-bg-default px-(--padding-5) py-(--padding-4) text-left font-normal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-border-brand)]"
+                disabled={isSending}
                 onClick={() => setIsLocationOpen((prev) => !prev)}
                 type="button"
               >
@@ -337,6 +493,7 @@ export function NotificationView() {
             </label>
             <input
               className="w-full rounded-lg border border-border-default bg-bg-default px-(--padding-5) py-(--padding-4) text-body-xxsmall-pc text-text-primary outline-none placeholder:text-text-tertiary focus-visible:border-border-brand"
+              disabled={isSending}
               id="notification-title"
               maxLength={TITLE_MAX_LENGTH}
               onChange={(event) => {
@@ -354,6 +511,7 @@ export function NotificationView() {
             actionLabel={isGenerated ? "새 알림 작성" : "생성"}
             actionVariant={isGenerated ? "secondary" : "primary"}
             className="min-h-0 h-auto flex-1"
+            disabled={isSending}
             error={generateError ?? undefined}
             label="상세 설명"
             onAction={isGenerated ? handleStartNew : handleGenerate}
@@ -362,23 +520,37 @@ export function NotificationView() {
               setBody(event.target.value);
             }}
             placeholder="생성 버튼을 눌러주세요"
-            state={generateError ? "error" : "default"}
+            state={generateError ? "error" : isSending ? "loading" : "default"}
             value={body}
           />
         </div>
       ) : (
         <div className="scrollbar-none flex min-h-0 flex-1 flex-col gap-(--gap-5) overflow-y-auto">
-          {inbox.map((item) => (
-            <NotificationAlarmCard
-              key={item.id}
-              body={item.body}
-              createdAt={item.createdAt}
-              locationLabel={item.locationLabel}
-              risk={item.risk}
-              title={item.title}
-              variant="inbox"
-            />
-          ))}
+          {isInboxLoading && inbox.length === 0 ? (
+            <p className="text-body-xsmall-pc text-text-tertiary">
+              알림을 불러오는 중입니다
+            </p>
+          ) : isInboxError ? (
+            <p className="text-body-xsmall-pc text-text-tertiary">
+              알림을 불러오지 못했습니다
+            </p>
+          ) : inbox.length === 0 ? (
+            <p className="text-body-xsmall-pc text-text-tertiary">
+              받은 알림이 없습니다
+            </p>
+          ) : (
+            inbox.map((item) => (
+              <NotificationAlarmCard
+                key={item.id}
+                body={item.body}
+                createdAt={item.createdAt}
+                locationLabel={item.locationLabel}
+                risk={item.risk}
+                title={item.title}
+                variant="inbox"
+              />
+            ))
+          )}
         </div>
       )}
     </div>
