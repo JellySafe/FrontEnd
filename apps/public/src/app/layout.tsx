@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { LikesProvider } from "@/shared/likes/LikesProvider";
 import { SelectedLocationProvider } from "@/shared/location/SelectedLocationProvider";
+import { SplashScreen } from "@/shared/ui/SplashScreen";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
@@ -26,7 +27,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>
           <LikesProvider>
-            <SelectedLocationProvider>{children}</SelectedLocationProvider>
+            <SelectedLocationProvider>
+              <SplashScreen />
+              {children}
+            </SelectedLocationProvider>
           </LikesProvider>
         </Providers>
       </body>
