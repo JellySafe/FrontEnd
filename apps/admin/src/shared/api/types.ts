@@ -267,6 +267,19 @@ export type AdminBeachItemResponse = {
   isActive?: boolean;
 };
 
+export type RiskTrendPointResponse = {
+  generatedAt: string;
+  riskLevel: BackendRiskLevel;
+  riskScore: number;
+};
+
+export type DailyRiskFactorResponse = {
+  code: string;
+  name: string;
+  detail: string | null;
+  scoreDelta: number;
+};
+
 export type DailyReportResponse = {
   reportId: number | null;
   beachId: number;
@@ -280,6 +293,9 @@ export type DailyReportResponse = {
   memo: string | null;
   summaryJson: unknown | null;
   persisted: boolean;
+  // 구 서버 응답 호환을 위해 optional 유지, 코드에서 ?? [] 로 방어 접근
+  riskTrend?: RiskTrendPointResponse[];
+  topFactors?: DailyRiskFactorResponse[];
 };
 
 export type GenerateDailyReportRequest = {

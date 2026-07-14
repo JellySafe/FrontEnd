@@ -71,12 +71,13 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 
   const favoritesQueryKey = favoritesQueryKeys.list(token);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isFetched, isError } = useQuery({
     queryKey: favoritesQueryKey,
     queryFn: () => getFavorites(token),
     // 토큰이 준비되기 전에는 요청하지 않는다
     enabled: token !== "",
   });
+  const isLoading = !isFetched && !isError;
 
   // 서버 목록에서 파생. 토큰/데이터 없으면 빈 값
   const likedIds = useMemo<Set<string>>(() => {

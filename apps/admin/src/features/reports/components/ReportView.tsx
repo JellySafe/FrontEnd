@@ -19,11 +19,13 @@ import {
 } from "@/shared/ui/icons";
 import {
   generateDailyReport,
+  getDailyReport,
   updateDailyReportMemo,
 } from "../api/daily-reports-api";
 import {
   EMPTY_HOURLY,
   causesFromBeachRisk,
+  causesFromTopFactors,
   filterActionsByReportDate,
   toReportData,
   toReportHistory,
@@ -380,23 +382,30 @@ export function ReportView() {
 
     try {
       const numericBeachId = Number(beachId);
-      const response = await generateDailyReport({
+      await generateDailyReport({
         date,
         beachId: numericBeachId,
       });
 
-      const [actionsResponse, beachRisk] = await Promise.all([
+      // 생성(POST) 응답에는 riskTrend/topFactors가 없어 GET으로 원본 이력을 다시 조회한다
+      const [report, actionsResponse, beachRisk] = await Promise.all([
+        getDailyReport(numericBeachId, date),
         getBeachOperationActions(numericBeachId),
         getAdminBeachRisk(numericBeachId),
       ]);
 
       const filteredActions = filterActionsByReportDate(actionsResponse.items, date);
-      const causes = causesFromBeachRisk(beachRisk);
+      // topFactors 우선, 없으면 beachRisk 폴백
+      const topFactors = report.topFactors ?? [];
+      const causes =
+        topFactors.length > 0
+          ? causesFromTopFactors(topFactors)
+          : causesFromBeachRisk(beachRisk);
       const history = toReportHistory(filteredActions);
-      const nextReportData = toReportData(response, causes, history);
+      const nextReportData = toReportData(report, causes, history);
 
       setReportData(nextReportData);
-      setMemo(response.memo ?? "");
+      setMemo(report.memo ?? "");
       setReadyKey(filterKey);
     } catch (error) {
       if (handleUnauthorized(error)) return;
@@ -616,11 +625,6 @@ export function ReportView() {
                 style={{ left: scrollThumbLeft }}
               />
             </div>
-            {isReady && reportData?.riskChangeSummary ? (
-              <p className="text-body-xxsmall-pc text-text-secondary">
-                {reportData.riskChangeSummary}
-              </p>
-            ) : null}
           </section>
 
           <section className="flex gap-(--gap-3)">

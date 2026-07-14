@@ -29,7 +29,7 @@ export const EMERGENCY_GUIDE: EmergencyItem[] = [
     segments: [
       { text: "쏘인 부위는 " },
       { text: "식염수로 세척", emphasis: "brand" },
-      { text: "합니다." },
+      { text: "한다." },
     ],
   },
   {

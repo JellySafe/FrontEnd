@@ -69,7 +69,7 @@ export function AlarmScreen() {
 
       <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         {tab === "alarm" ? (
-          alertsQuery.isLoading ? (
+          !alertsQuery.isFetched && !alertsQuery.isError ? (
             <p className="py-(--padding-10) text-center text-body-xsmall-mobile text-text-tertiary">
               알림을 불러오는 중입니다
             </p>
