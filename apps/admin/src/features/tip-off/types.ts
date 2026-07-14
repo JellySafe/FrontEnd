@@ -87,6 +87,16 @@ export const ADMIN_STATUS_LABEL: Record<AdminStatus, string> = {
   "admin-pending": "관리자 확인중",
 };
 
+export const REPORT_STATUS_LABEL: Record<BackendReportStatus, string> = {
+  received: "접수",
+  ai_processing: "AI 처리중",
+  ai_done: "미검수",
+  hold: "관리자 보류",
+  verified: "확인완료",
+  rejected: "반려",
+  reflected: "반영완료",
+};
+
 export const REJECT_REASON_LABEL: Record<Exclude<RejectReason, null>, string> = {
   duplicate: "중복",
   "not-jellyfish": "해파리 아님",
@@ -108,8 +118,9 @@ export const REVIEW_DECISION_LABEL: Record<Exclude<ReviewDecision, null>, string
 };
 
 export function canReviewReport(status: BackendReportStatus): boolean {
-  // 검수 가능: AI 완료 대기, 보류(재판단). 확정/파이프라인 전/반영 완료는 잠금
-  return status === "ai_done" || status === "hold";
+  // AI 접수/처리 중만 잠금. 확정(verified 등)은 UI에서 열어 두고 백엔드 전이 허용 시 동작
+  // TODO: 백엔드가 verified|rejected|reflected 재변경 전이를 허용하면 확정 건도 저장 가능
+  return status !== "received" && status !== "ai_processing";
 }
 
 export function countActiveTipOffFilters(filter: TipOffFilterState): number {

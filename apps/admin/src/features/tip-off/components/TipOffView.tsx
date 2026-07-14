@@ -92,7 +92,7 @@ export function TipOffView() {
         }
         if (error.code === "REPORT_INVALID_TRANSITION") {
           setReviewError(
-            "이미 확정된 검수 결과라 변경할 수 없습니다. 관리자 상태가「-」(미검수)인 제보를 선택해주세요.",
+            "백엔드에서 이 상태 변경을 허용하지 않습니다. (확정 검수 재변경은 백엔드 전이 규칙 수정이 필요합니다)",
           );
           return;
         }

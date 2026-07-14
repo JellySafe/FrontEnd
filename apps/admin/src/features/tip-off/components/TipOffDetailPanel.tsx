@@ -2,8 +2,8 @@
 
 import { Button } from "@jellysafe/design-system";
 import {
-  ADMIN_STATUS_LABEL,
   AI_VERDICT_LABEL,
+  REPORT_STATUS_LABEL,
   REPORT_TYPE_LABEL,
   type RejectReason,
   type ReviewDecision,
@@ -44,6 +44,10 @@ export function TipOffDetailPanel({
   submitError = null,
   isReviewLocked = false,
 }: TipOffDetailPanelProps) {
+  const isFinalizedStatus =
+    detail.reportStatus === "verified" ||
+    detail.reportStatus === "rejected" ||
+    detail.reportStatus === "reflected";
   const isSubmitEnabled =
     !isReviewLocked && canSubmitReview(reviewDecision, rejectReason) && !isSubmitting;
 
@@ -74,17 +78,10 @@ export function TipOffDetailPanel({
       </div>
 
       {isReviewLocked ? (
-        <div className="flex flex-col gap-(--gap-3)">
-          <p className="text-caption-small-pc text-text-tertiary">
-            이미 검수가 완료되었거나 아직 검수할 수 없는 상태입니다. 상태를 변경할 수 없습니다.
-          </p>
-          <div className="flex flex-col gap-(--gap-3)">
-            <h3 className="text-heading-xsmall-pc text-text-primary">현재 상태</h3>
-            <p className="text-body-xxsmall-pc text-text-primary">
-              {ADMIN_STATUS_LABEL[detail.adminStatus]}
-            </p>
-          </div>
-        </div>
+        <p className="text-caption-small-pc text-text-tertiary">
+          AI 처리가 끝난 뒤에 검수할 수 있습니다. (현재:{" "}
+          {REPORT_STATUS_LABEL[detail.reportStatus]})
+        </p>
       ) : null}
 
       <TipOffStatusControl
@@ -94,6 +91,12 @@ export function TipOffDetailPanel({
         rejectReason={rejectReason}
         reviewDecision={reviewDecision}
       />
+
+      {!isReviewLocked && isFinalizedStatus ? (
+        <p className="text-caption-small-pc text-text-tertiary">
+          주의: 백엔드가 확정 상태 재변경을 아직 막으면 저장이 실패할 수 있습니다.
+        </p>
+      ) : null}
 
       {submitError ? (
         <p className="text-caption-small-pc text-text-error">{submitError}</p>

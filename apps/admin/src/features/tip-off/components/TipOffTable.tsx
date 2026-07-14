@@ -9,8 +9,8 @@ import { useScrollIndicator } from "@/shared/hooks/useScrollIndicator";
 import { RISK_LABEL } from "@/shared/risk/types";
 import { RefreshIcon } from "@/shared/ui/icons";
 import {
-  ADMIN_STATUS_LABEL,
   AI_VERDICT_LABEL,
+  REPORT_STATUS_LABEL,
   REPORT_TYPE_LABEL,
   type TipOffListItem,
 } from "../types";
@@ -171,7 +171,7 @@ export function TipOffTable({ rows, selectedId, onSelect, onRetryThumbnail }: Ti
                 <ColumnDivider />
                 <Cell>
                   <p className="text-body-xsmall-pc text-text-tertiary">
-                    {ADMIN_STATUS_LABEL[row.adminStatus]}
+                    {REPORT_STATUS_LABEL[row.reportStatus]}
                   </p>
                 </Cell>
               </TableRow>
