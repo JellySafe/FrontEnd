@@ -15,8 +15,15 @@ export function getAdminNotifications(
     page: String(params?.page ?? 1),
     size: String(params?.size ?? 50),
   });
+  searchParams.set("_t", String(Date.now()));
   return getJson<PaginatedResponse<AdminNotificationListItemResponse>>(
     `/api/admin/notifications?${searchParams.toString()}`,
+    {
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    },
   );
 }
 

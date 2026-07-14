@@ -11,7 +11,7 @@ import {
 import { ApiError } from "@/shared/api/http-client";
 import type { BackendRiskLevel } from "@/shared/api/types";
 import { useScrollIndicator } from "@/shared/hooks/useScrollIndicator";
-import { toRiskLevel } from "@/shared/risk/mappers";
+import { formatDateTime, toRiskLevel } from "@/shared/risk/mappers";
 import { AdminLargeTextField } from "@/shared/ui/AdminLargeTextField";
 import { SearchIcon } from "@/shared/ui/icons";
 import { getAdminNotifications, sendNotification } from "../api/notifications-api";
@@ -29,6 +29,9 @@ const UP_DOWN_ICON_PATH =
 
 const TITLE_MAX_LENGTH = 40;
 const GENERATE_ERROR_MESSAGE = "생성을 실패했습니다. 다시 시도해 주세요.";
+const DUPLICATE_STAFF_NOTIFICATION_MESSAGE =
+  "동일 조건의 알림이 이미 있어 추가 발송되지 않았습니다.";
+const INBOX_REFETCH_DELAY_MS = 500;
 const COPY_TOAST_MESSAGE = "해당 알림 내용을 복사 했습니다";
 const COPY_TOAST_DURATION_MS = 2500;
 const COPY_TOAST_EXIT_MS = 600;
@@ -99,13 +102,17 @@ export function NotificationView() {
 
   const loadInbox = useCallback(async () => {
     const response = await getAdminNotifications({ page: 1, size: 50 });
-    const items = response.items.map(toNotificationItem);
-    setInbox(items);
-    setHasUnread(
-      response.items.some((item) => item.readAt === null) ||
-        items.some((item) => item.isUnread),
-    );
-    return items;
+    const fetched = response.items.map(toNotificationItem);
+    let merged: NotificationItem[] = fetched;
+
+    setInbox((prev) => {
+      const fetchedIds = new Set(fetched.map((item) => item.id));
+      const localOnly = prev.filter((item) => !fetchedIds.has(item.id));
+      merged = [...localOnly, ...fetched];
+      return merged;
+    });
+    setHasUnread(merged.some((item) => item.isUnread));
+    return merged;
   }, []);
 
   useEffect(() => {
@@ -305,18 +312,60 @@ export function NotificationView() {
         return;
       }
 
-      await loadInbox();
-      setIsGenerated(true);
+      const optimisticItems: NotificationItem[] = [];
+      results.forEach((result, index) => {
+        if (result.status !== "fulfilled") return;
 
-      const sentToStaff = recipients.some(
-        (recipient) => recipient === "admin" || recipient === "operator",
-      );
-      if (sentToStaff) {
-        setActiveTab("inbox");
-        setHasUnread(false);
-      } else {
+        const recipient = recipients[index];
+        if (recipient !== "admin" && recipient !== "operator") return;
+
+        const { created, notificationId } = result.value;
+        if (!created || notificationId == null) return;
+
+        optimisticItems.push({
+          id: String(notificationId),
+          locationLabel: selectedBeach.name,
+          title: trimmedTitle,
+          body: trimmedBody,
+          createdAt: formatDateTime(new Date().toISOString()),
+          risk: selectedBeachRisk ?? "safe",
+          isUnread: true,
+        });
+      });
+
+      if (optimisticItems.length > 0) {
+        setInbox((prev) => {
+          const existingIds = new Set(prev.map((item) => item.id));
+          const newItems = optimisticItems.filter((item) => !existingIds.has(item.id));
+          if (newItems.length === 0) return prev;
+          return [...newItems, ...prev];
+        });
         setHasUnread(true);
       }
+
+      const staffAttempts = results
+        .map((result, index) => ({ result, recipient: recipients[index] }))
+        .filter(
+          ({ recipient }) => recipient === "admin" || recipient === "operator",
+        );
+
+      const allStaffSkipped =
+        staffAttempts.length > 0 &&
+        staffAttempts.every(
+          ({ result }) =>
+            result.status === "fulfilled" && result.value.created === false,
+        );
+
+      if (allStaffSkipped && optimisticItems.length === 0) {
+        setGenerateError(DUPLICATE_STAFF_NOTIFICATION_MESSAGE);
+      }
+
+      setIsGenerated(true);
+
+      void loadInbox();
+      window.setTimeout(() => {
+        void loadInbox();
+      }, INBOX_REFETCH_DELAY_MS);
     } catch (error) {
       if (handleUnauthorized(error)) return;
 
