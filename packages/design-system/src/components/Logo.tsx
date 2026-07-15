@@ -17,7 +17,7 @@ export function Logo({
 }: LogoProps) {
   return (
     <span
-      aria-label={variant === "logotype" ? "Jellysafe" : undefined}
+      aria-label={variant === "logotype" ? "JellySafe" : undefined}
       className={[
         "inline-flex shrink-0 items-center text-icon-brand",
         variant === "logotype" ? "gap-(--gap-2)" : "",
@@ -43,7 +43,7 @@ export function Logo({
       </svg>
       {variant === "logotype" ? (
         <span className="text-[28px] leading-8 font-semibold tracking-[-0.025em]">
-          Jellysafe
+          JellySafe
         </span>
       ) : null}
     </span>
